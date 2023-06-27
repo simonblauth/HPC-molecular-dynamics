@@ -2,6 +2,7 @@
 set(MY_MD_HEADERS
   hello.h
   verlet.h
+  types.h
 )
 
 # List of implementation files
