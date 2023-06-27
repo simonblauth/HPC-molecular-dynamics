@@ -1,0 +1,18 @@
+#include "verlet.h"
+
+void verlet_step1(double &x, double &y, double &z, double &vx, double &vy, double &vz,
+                  double fx, double fy, double fz, double timestep, double mass) {
+    vx += fx * timestep / (2 * mass);
+    vy += fy * timestep / (2 * mass);
+    vz += fz * timestep / (2 * mass);
+    x += vx * timestep;
+    y += vy * timestep;
+    z += vz * timestep;
+}
+
+void verlet_step2(double &vx, double &vy, double &vz, double fx, double fy, double fz,
+                  double timestep, double mass) {
+    vx += fx * timestep / (2 * mass);
+    vy += fy * timestep / (2 * mass);
+    vz += fz * timestep / (2 * mass);
+}
