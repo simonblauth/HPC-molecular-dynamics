@@ -1,14 +1,19 @@
 # List of headers
 set(MY_MD_HEADERS
+  atoms.h
   hello.h
-  verlet.h
+  lj_direct_summation.h
   types.h
+  verlet.h
+  xyz.h
 )
 
 # List of implementation files
 set(MY_MD_CPP
   hello.cpp
+  lj_direct_summation.cpp
   verlet.cpp
+  xyz.cpp
 )
 
 # Create a static library

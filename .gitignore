@@ -1,6 +1,7 @@
 # Custom files here
 *.xyz
 .idea
+.vscode
 
 # -------------- Below are genereated exclusion patterns ----------------------
 
