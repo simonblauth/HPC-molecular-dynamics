@@ -26,3 +26,11 @@ void verlet_step1(Positions_t &positions, Velocities_t &velocities,
 void verlet_step2(Velocities_t &velocities, const Forces_t &forces, double timestep, double mass) {
     velocities += forces * timestep / (2 * mass);
 }
+
+void verlet_step1(Atoms &atoms, double timestep) {
+    atoms.velocities += atoms.forces * timestep / (2 * atoms.mass);
+    atoms.positions += atoms.velocities * timestep;
+}
+void verlet_step2(Atoms &atoms, double timestep) {
+    atoms.velocities += atoms.forces * timestep / (2 * atoms.mass);
+}

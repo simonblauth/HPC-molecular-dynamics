@@ -9,6 +9,7 @@ class Atoms {
     Positions_t positions;
     Velocities_t velocities;
     Forces_t forces;
+    double mass = 1.0;
 
     Atoms(const size_t nb_atoms)
         : positions(3, nb_atoms),
@@ -39,8 +40,13 @@ class Atoms {
         return positions.cols();
     }
 
-    double kinetic_energy(double mass = 1.0) {
+    double kinetic_energy() const {
         return mass * velocities.cwiseAbs2().sum() / 2;
+    }
+
+    double current_temperature() const {
+      double k_B = 8.617333262;
+      return kinetic_energy() / (nb_atoms() * k_B) * 2 / 3;
     }
 };
 

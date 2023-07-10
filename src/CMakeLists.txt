@@ -3,6 +3,7 @@ set(MY_MD_HEADERS
   atoms.h
   hello.h
   lj_direct_summation.h
+  thermostat.h
   types.h
   verlet.h
   xyz.h
@@ -12,6 +13,7 @@ set(MY_MD_HEADERS
 set(MY_MD_CPP
   hello.cpp
   lj_direct_summation.cpp
+  thermostat.cpp
   verlet.cpp
   xyz.cpp
 )
