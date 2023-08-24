@@ -1,3 +1,4 @@
+#include <argparse/argparse.hpp>
 #include "atoms.h"
 #include "lj_direct_summation.h"
 #include "types.h"
@@ -19,6 +20,19 @@ int main(int argc, char *argv[]) {
     auto [names, positions, velocities]{read_xyz_with_velocities(p)};
     Atoms atoms(positions, velocities);
 
+    argparse::ArgumentParser parser("milestone 04");
+    parser.add_argument("-s", "--silent")
+        .help("Do not print stats every 100 time steps.")
+        .default_value(false)
+        .implicit_value(true);
+    try {
+        parser.parse_args(argc, argv);
+    } catch (const std::runtime_error& err) {
+        std::cerr << err.what() << std::endl;
+        std::cerr << parser;
+        std::exit(1);
+    }
+
     double mass = 1;
     double sigma = 1;
     double epsilon = 1;
@@ -32,9 +46,11 @@ int main(int argc, char *argv[]) {
         verlet_step2(atoms.velocities, atoms.forces, timestep, mass);
         double ekin = atoms.kinetic_energy();
         if (ts % 100 == 0) {
-            std::cout << "Total Energy: " << ekin + epot << ", ";
-            std::cout << "Kinetic Energy: " << ekin << ", ";
-            std::cout << "Potential Energy: " << epot << std::endl;
+            if (parser["--silent"] == false) {
+                std::cout << "Total Energy: " << ekin + epot << ", ";
+                std::cout << "Kinetic Energy: " << ekin << ", ";
+                std::cout << "Potential Energy: " << epot << std::endl;
+            }
             write_xyz(traj, atoms);
             // TODO: plot epot in report
         }

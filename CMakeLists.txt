@@ -49,6 +49,13 @@ if(NOT Eigen3_FOUND)
   find_package(Eigen3 3.4.0 REQUIRED MODULE EXACT)
 endif()
 
+# using argparse library
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
+
 # Option to turn ON/OFF MPI
 option(USE_MPI "Activate MPI")
 
