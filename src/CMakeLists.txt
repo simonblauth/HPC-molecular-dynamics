@@ -3,6 +3,7 @@ set(MY_MD_HEADERS
   atoms.h
   hello.h
   lj_direct_summation.h
+  simulation_utils.h
   thermostat.h
   types.h
   verlet.h
