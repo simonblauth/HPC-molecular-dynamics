@@ -4,6 +4,7 @@
 #include <cmath>
 #include "types.h"
 
+// Holds the current state of a simulation.
 class Atoms {
   public:
     Positions_t positions;

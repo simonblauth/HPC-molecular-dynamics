@@ -3,6 +3,7 @@
 
 #include "atoms.h"
 
+// Implementation of the https://en.wikipedia.org/wiki/Berendsen_thermostat.
 void berendsen_thermostat(Atoms &atoms, double target_temperature, double timestep,
                           double relaxation_time);
 

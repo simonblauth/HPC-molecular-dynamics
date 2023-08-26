@@ -26,18 +26,20 @@ int main(int argc, char *argv[]) {
     Writer writer(pwd, parser);
 
     // initialize simulation
-    double mass = parser.get<double>("--mass");
     double sigma = parser.get<double>("--sigma");
     double epsilon = parser.get<double>("--epsilon");
-    double timestep = parser.get<double>("--timestep") * std::sqrt(mass * sigma * sigma / epsilon);
+
+    double lattice_distance = parser.get<double>("--lattice_dist") * sigma;
+    size_t nb_atoms_per_lattice = parser.get<size_t>("--lattice_size");
+
+    Atoms atoms = init_cubic_lattice(nb_atoms_per_lattice, lattice_distance);
+
+    atoms.mass = parser.get<double>("--mass");
+    double timestep = parser.get<double>("--timestep") * std::sqrt(atoms.mass * sigma * sigma / epsilon);
     size_t max_timesteps = parser.get<size_t>("--max_timesteps");
 
     double target_temperaure = parser.get<double>("--temperature") * 1e-5;
     double relaxation_time = parser.get<size_t>("--relaxation_time") * timestep;
-    double lattice_distance = parser.get<double>("--lattice_dist") * sigma;
-
-    size_t nb_atoms_per_lattice = parser.get<size_t>("--lattice_size");
-    Atoms atoms = init_cubic_lattice(nb_atoms_per_lattice, lattice_distance);
 
     // simulate
     for (size_t ts = 0; ts < max_timesteps; ts++) {

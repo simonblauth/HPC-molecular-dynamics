@@ -5,6 +5,7 @@
 
 namespace fs = std::filesystem;
 
+// Handles writing simulation data in various formats such as console, csv and xyz
 class Writer {
 private:
     std::filesystem::path csv_path;
@@ -59,7 +60,7 @@ private:
     }
 };
 
-
+// constructs an ArgumentParser with default arguments used for most simulations
 argparse::ArgumentParser default_parser(const char* name) {
     argparse::ArgumentParser parser(name);
     // IO parameters
@@ -125,6 +126,7 @@ argparse::ArgumentParser default_parser(const char* name) {
     return parser;
 }
 
+// constructs an atom configuration in a simple cubic lattice
 Atoms init_cubic_lattice(size_t nb_atoms_per_lattice, double lattice_distance) {
     Atoms atoms(std::pow(nb_atoms_per_lattice, 3));
     for (size_t i = 0; i < nb_atoms_per_lattice; i++) {
