@@ -3,6 +3,7 @@ set(MY_MD_HEADERS
   atoms.h
   hello.h
   lj_direct_summation.h
+  neighbors.h
   simulation_utils.h
   thermostat.h
   types.h
@@ -14,6 +15,7 @@ set(MY_MD_HEADERS
 set(MY_MD_CPP
   hello.cpp
   lj_direct_summation.cpp
+  neighbors.cpp
   thermostat.cpp
   verlet.cpp
   xyz.cpp

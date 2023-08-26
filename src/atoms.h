@@ -1,12 +1,14 @@
 #ifndef __ATOMS_H
 #define __ATOMS_H
 
+#include <algorithm>
 #include <cmath>
 #include "types.h"
 
 // Holds the current state of a simulation.
 class Atoms {
   public:
+    Names_t names;
     Positions_t positions;
     Velocities_t velocities;
     Forces_t forces;
@@ -15,16 +17,29 @@ class Atoms {
     Atoms(const size_t nb_atoms)
         : positions(3, nb_atoms),
           velocities(3, nb_atoms),
-          forces(3, nb_atoms) {
+          forces(3, nb_atoms),
+          names(nb_atoms) {
         positions.setZero();
         velocities.setZero();
         forces.setZero();
+        std::fill(names.begin(), names.end(), "H");
     }
 
     Atoms(const Positions_t &p)
         : positions{p},
           velocities{3, p.cols()},
-          forces{3, p.cols()} {
+          forces{3, p.cols()},
+          names(p.cols()) {
+        velocities.setZero();
+        forces.setZero();
+        std::fill(names.begin(), names.end(), "H");
+    }
+
+    Atoms(const Names_t &n, Positions_t &p)
+        : positions{p},
+          velocities{3, p.cols()},
+          forces{3, p.cols()},
+          names{n} {
         velocities.setZero();
         forces.setZero();
     }
@@ -32,7 +47,18 @@ class Atoms {
     Atoms(const Positions_t &p, const Velocities_t &v)
         : positions{p},
           velocities{v},
-          forces{3, p.cols()} {
+          forces{3, p.cols()},
+          names(p.cols()) {
+        assert(p.cols() == v.cols());
+        forces.setZero();
+        std::fill(names.begin(), names.end(), "H");
+    }
+
+    Atoms(const Names_t &n, const Positions_t &p, const Velocities_t &v)
+        : positions{p},
+          velocities{v},
+          forces{3, p.cols()},
+          names{n} {
         assert(p.cols() == v.cols());
         forces.setZero();
     }

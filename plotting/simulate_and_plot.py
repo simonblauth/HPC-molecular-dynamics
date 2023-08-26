@@ -23,13 +23,14 @@ def total_energy(simulator: str):
 
 
 def simulation_time(simulator: str):
-    lattice_sizes = list(range(2, 10))
+    lattice_sizes = list(range(2, 11))
     nb_atoms = [math.pow(ls, 3) for ls in lattice_sizes]
     simulation_times = []
     timesteps = 10
+    cutoff = 3
     for ls in lattice_sizes:
         start = time.time()
-        os.system(f"{simulator} --max_timesteps {timesteps} --silent --lattice_size {ls}")
+        os.system(f"{simulator} --max_timesteps {timesteps} --silent --lattice_size {ls} --cutoff {cutoff}")
         stop = time.time()
         simulation_times.append((stop - start) / timesteps)
     plt.plot(nb_atoms, simulation_times)

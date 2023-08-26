@@ -123,6 +123,13 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<size_t>(1000)
         .scan<'u', size_t>();
+    // cutoff
+    parser.add_argument("--cutoff")
+        .help("The amximum distance for the neighbor search.")
+        .nargs(1)
+        .default_value<double>(5.0)
+        .scan<'g', double>();
+
     return parser;
 }
 

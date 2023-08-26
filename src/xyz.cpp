@@ -111,7 +111,8 @@ void write_xyz(std::ofstream &file, Atoms &atoms) {
 
     // Element name, position
     for (int i = 0; i < atoms.nb_atoms(); ++i) {
-        file << std::setw(2) << "Au" << " "
+        auto w = atoms.names[i].length();
+        file << std::setw(w)  << atoms.names[i] << " "
              << std::setw(10) << atoms.positions.col(i).transpose()
              << std::setw(10) << atoms.velocities.col(i).transpose()
              << std::endl;
