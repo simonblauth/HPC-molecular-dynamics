@@ -40,7 +40,6 @@ int main(int argc, char *argv[]) {
 
     double cutoff = parser.get<double>("--cutoff");
     NeighborList neighbor_list(cutoff);
-    neighbor_list.update(atoms);
 
     // simulate
     bool relax = false;
@@ -48,6 +47,7 @@ int main(int argc, char *argv[]) {
     for (size_t ts = 0; ts < max_timesteps; ts++) {
         writer.write_traj(ts, atoms);
         verlet_step1(atoms, timestep);
+        neighbor_list.update(atoms);
         double epot = ducastelle(atoms, neighbor_list, cutoff);
         verlet_step2(atoms, timestep);
         double ekin = atoms.kinetic_energy();

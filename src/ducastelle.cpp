@@ -34,7 +34,7 @@
  * and alloys", Phys. Rev. B 48, 22 (1993) The default values for the parameters
  * are the Au parameters from Cleri & Rosato's paper.
  */
-double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
+Eigen::ArrayXd _ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
                   double cutoff, double A, double xi, double p, double q,
                   double re) {
     auto cutoff_sq{cutoff * cutoff};
@@ -116,5 +116,18 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
     }
 
     // Return total potential energy
-    return energies.sum();
+    return energies;
+}
+
+double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
+                  double cutoff, double A, double xi, double p, double q,
+                  double re) {
+    return _ducastelle(atoms, neighbor_list, cutoff, A, xi, p, q, re).sum();
+}
+
+double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, int nb_local,
+                  double cutoff, double A, double xi, double p, double q,
+                  double re) {
+    auto energies = _ducastelle(atoms, neighbor_list, cutoff, A, xi, p, q, re);
+    return energies(Eigen::all, Eigen::seq(0, nb_local)).sum();
 }

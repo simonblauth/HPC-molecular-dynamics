@@ -154,6 +154,11 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<double>(5.0)
         .scan<'g', double>();
+    parser.add_argument("--domains")
+        .help("The number of domains in x, y, z direction.")
+        .nargs(3)
+        .default_value(std::vector<int>{1, 1, 1})
+        .scan<'i', int>();
 
     return parser;
 }
