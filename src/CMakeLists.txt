@@ -1,6 +1,7 @@
 # List of headers
 set(MY_MD_HEADERS
   atoms.h
+  ducastelle.h
   hello.h
   lj_direct_summation.h
   neighbors.h
@@ -13,6 +14,7 @@ set(MY_MD_HEADERS
 
 # List of implementation files
 set(MY_MD_CPP
+  ducastelle.cpp
   hello.cpp
   lj_direct_summation.cpp
   neighbors.cpp

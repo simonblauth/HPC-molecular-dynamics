@@ -43,7 +43,8 @@ int main(int argc, char *argv[]) {
         double epot = lj_direct_summation(atoms, epsilon, sigma);
         verlet_step2(atoms.velocities, atoms.forces, timestep, atoms.mass);
         double ekin = atoms.kinetic_energy();
-        writer.write_energy(ts, ekin, epot);
+        double temp = atoms.current_temperature();
+        writer.write_stats(ts, ekin, epot, temp);
     }
 
     return 0;

@@ -43,5 +43,3 @@ double lj_direct_summation(Atoms &atoms, NeighborList &neighbor_list, double cut
     }
     return epot / 2;
 }
-// 38.19s debug
-// 0.73s release

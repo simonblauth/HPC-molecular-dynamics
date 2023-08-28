@@ -27,10 +27,17 @@
 
 #include "neighbors.h"
 
-NeighborList::NeighborList() : seed_{1}, neighbors_{1} {}
+NeighborList::NeighborList() : seed_{1}, neighbors_{1}, cutoff_{5.0} {}
+NeighborList::NeighborList(double cutoff) : seed_{1}, neighbors_{1}, cutoff_{cutoff} {}
 
 const std::tuple<const Eigen::ArrayXi &, const Eigen::ArrayXi &>
 NeighborList::update(const Atoms &atoms, double cutoff) {
+    cutoff_ = cutoff;
+    return update(atoms);
+}
+
+const std::tuple<const Eigen::ArrayXi &, const Eigen::ArrayXi &>
+NeighborList::update(const Atoms &atoms) {
     // Shorthand for atoms.positions.
     auto &&r{atoms.positions};
 
@@ -55,13 +62,13 @@ NeighborList::update(const Atoms &atoms, double cutoff) {
     // number of cells in each Cartesian direction.
     origin = r.rowwise().minCoeff();
     lengths = r.rowwise().maxCoeff() - origin;
-    nb_grid_pts = (lengths / cutoff).ceil().cast<int>();
+    nb_grid_pts = (lengths / cutoff_).ceil().cast<int>();
 
     // Set to 1 if all atoms are in-plane
     nb_grid_pts = (nb_grid_pts <= 0).select(1, nb_grid_pts);
 
     // Pad
-    padding_lengths = nb_grid_pts.cast<double>() * cutoff - lengths;
+    padding_lengths = nb_grid_pts.cast<double>() * cutoff_ - lengths;
     origin -= padding_lengths / 2;
     lengths += padding_lengths;
 
@@ -122,7 +129,7 @@ NeighborList::update(const Atoms &atoms, double cutoff) {
     seed_.resize(atoms.nb_atoms() + 1);
 
     int n{0};
-    auto cutoffsq{cutoff * cutoff};
+    auto cutoffsq{cutoff_ * cutoff_};
 
     // Constructing index shift vectors to look for neighboring cells
     auto neighborhood = []() {

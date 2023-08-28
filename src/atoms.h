@@ -71,9 +71,15 @@ class Atoms {
         return mass * velocities.cwiseAbs2().sum() / 2;
     }
 
+    // returns temperature in 1e-5 * K, so scale with 1e5 to get K
     double current_temperature() const {
       double k_B = 8.617333262;
       return kinetic_energy() / (nb_atoms() * k_B) * 2 / 3;
+    }
+
+    // returns temperature in Kelvin
+    double current_temperature_kelvin() const {
+      return current_temperature() * 1e5;
     }
 };
 

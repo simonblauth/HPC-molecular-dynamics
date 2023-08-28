@@ -30,11 +30,14 @@
 class NeighborList {
   public:
     NeighborList();
+    NeighborList(double cutoff);
 
     /*
      * Update neighbor list from the particle positons stores in the `atoms`
      * argument
      */
+    const std::tuple<const Eigen::ArrayXi &, const Eigen::ArrayXi &>
+    update(const Atoms &atoms);
     const std::tuple<const Eigen::ArrayXi &, const Eigen::ArrayXi &>
     update(const Atoms &atoms, double cutoff);
 
@@ -159,6 +162,7 @@ class NeighborList {
 
     Eigen::ArrayXi seed_;
     Eigen::ArrayXi neighbors_;
+    double cutoff_;
 };
 
 #endif  // YAMD_NEIGHBORS_H

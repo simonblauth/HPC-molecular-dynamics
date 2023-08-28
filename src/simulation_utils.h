@@ -9,7 +9,9 @@ namespace fs = std::filesystem;
 class Writer {
 private:
     std::filesystem::path csv_path;
+    std::filesystem::path traj_path;
     bool write_to_csv;
+    bool write_to_xyz;
     bool write_to_console;
     size_t output_interval;
     std::ofstream csv;
@@ -18,6 +20,7 @@ private:
   public:
     Writer(fs::path pwd, argparse::ArgumentParser parser) {
         write_to_csv = parser.is_used("--csv");
+        write_to_xyz = parser.is_used("--traj");
         write_to_console = !parser.get<bool>("--silent");
         output_interval = parser.get<size_t>("--output_interval");
         if (write_to_csv) {
@@ -31,25 +34,36 @@ private:
             }
 
             csv.open(csv_path);
-            csv << "Timestep,Total Energy,Kinetic Energy,Potential Energy"
+            csv << "Timestep,Total Energy,Kinetic Energy,Potential Energy,Temperature"
                 << std::endl;
         }
-        auto traj_path = pwd / "traj.xyz";
-        traj.open(traj_path);
+        if (write_to_xyz) {
+            try {
+                auto p = parser.get<std::string>("--traj");
+                traj_path = fs::path(p);
+            } catch (const std::logic_error &e) {
+                traj_path = pwd / "traj.xyz";
+                std::cout << "No traj path provided, using default path: "
+                          << csv_path << std::endl;
+            }
+
+            traj.open(traj_path);
+        }
     }
     ~Writer() {
         csv.close();
         traj.close();
     }
-    void write_energy(size_t timestep, double ekin, double epot) {
+    void write_stats(size_t timestep, double ekin, double epot, double temp) {
         if (timestep % output_interval == 0) {
             if (write_to_console) {
                 std::cout << "Total Energy: " << ekin + epot << ", ";
                 std::cout << "Kinetic Energy: " << ekin << ", ";
-                std::cout << "Potential Energy: " << epot << std::endl;
+                std::cout << "Potential Energy: " << epot << ", ";
+                std::cout << "Temperature: " << temp << std::endl;
             }
             if (write_to_csv) {
-                csv << timestep << "," << ekin + epot << "," << ekin << "," << epot << std::endl;
+                csv << timestep << "," << ekin + epot << "," << ekin << "," << epot << "," << temp << std::endl;
             }
         }
     }
@@ -76,6 +90,12 @@ argparse::ArgumentParser default_parser(const char* name) {
     parser.add_argument("--csv")
         .help("If set write stats to csv. Optionally takes a path for the output file.")
         .nargs(argparse::nargs_pattern::optional);
+    parser.add_argument("--traj")
+        .help("If set write trajectory to xyz. Optionally takes a path for the output file.")
+        .nargs(argparse::nargs_pattern::optional);
+    parser.add_argument("-i", "--input")
+        .help("Takes a path for the input file.")
+        .nargs(1);
     // basic simulation parameters
     parser.add_argument("--max_timesteps")
         .help("The number of timesteps to run the simulation for.")
@@ -83,12 +103,12 @@ argparse::ArgumentParser default_parser(const char* name) {
         .default_value<size_t>(100000)
         .scan<'u', size_t>();
     parser.add_argument("-t", "--timestep")
-        .help("The timestep for the simulation (multiplied by √(m ⋅ σ² / ϵ)).")
+        .help("The timestep for the simulation in femtoseconds.")
         .nargs(1)
-        .default_value<double>(1e-3)
+        .default_value<double>(1.0)
         .scan<'g', double>();
     parser.add_argument("--mass")
-        .help("The mass of the atoms.")
+        .help("The mass of the atoms in g/mol.")
         .nargs(1)
         .default_value<double>(1.0)
         .scan<'g', double>();
@@ -112,7 +132,7 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<double>(1.05)
         .scan<'g', double>();
-    // thermostat
+    // temperature
     parser.add_argument("--temperature")
         .help("The target temperature for the thermostat (in Kelvin).")
         .nargs(1)
@@ -123,6 +143,11 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<size_t>(1000)
         .scan<'u', size_t>();
+    parser.add_argument("--deposit_energy")
+        .help("The amount of energy to deposit into the system every interval.")
+        .nargs(1)
+        .default_value<double>(10)
+        .scan<'g', double>();
     // cutoff
     parser.add_argument("--cutoff")
         .help("The amximum distance for the neighbor search.")
