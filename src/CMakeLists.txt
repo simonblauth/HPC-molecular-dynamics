@@ -12,6 +12,10 @@ set(MY_MD_HEADERS
   xyz.h
 )
 
+if (MPI_FOUND)
+  set(MY_MD_HEADERS ${MY_MD_HEADERS} mpi_support.h)
+endif()
+
 # List of implementation files
 set(MY_MD_CPP
   ducastelle.cpp
@@ -36,10 +40,12 @@ target_link_libraries(my_md_lib PUBLIC Eigen3::Eigen)
 # Link argparse lib
 target_link_libraries(my_md_lib PUBLIC argparse)
 
+# Add reasonable warning flags
+target_compile_options(my_md_lib PUBLIC -Wall -Wextra -Wpedantic -Wno-dangling-else -Wno-unused-variable -Wno-unused-but-set-variable)
+
 # Set up MPI includes and library linking
 # This also propagates to further targets
 if (MPI_FOUND)
-  target_compile_options(my_md_lib PUBLIC -Wall -Wextra -Wpedantic)
   target_compile_definitions(my_md_lib INTERFACE USE_MPI)
   target_include_directories(my_md_lib PUBLIC ${MPI_CXX_INCLUDE_DIRS} SYSTEM)
   target_link_libraries(my_md_lib PUBLIC MPI::MPI_CXX)

@@ -14,8 +14,10 @@ add_subdirectory(04)
 add_subdirectory(05)
 add_subdirectory(06)
 add_subdirectory(07)
+if (MPI_FOUND)
+  add_subdirectory(08)
+endif()
 
 # Future milestones
-# add_subdirectory(08)
 # add_subdirectory(09)
 

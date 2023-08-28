@@ -1,5 +1,6 @@
 #include "atoms.h"
 #include "ducastelle.h"
+#include "mpi.h"
 #include "neighbors.h"
 #include "simulation_utils.h"
 #include "types.h"
@@ -11,6 +12,7 @@
 namespace fs = std::filesystem;
 
 int main(int argc, char *argv[]) {
+    MPI_Init(&argc, &argv);
     // argument parsing
     argparse::ArgumentParser parser = default_parser("milestone 07");
     try {
@@ -69,6 +71,6 @@ int main(int argc, char *argv[]) {
         }
         writer.write_stats(ts, ekin, epot, avg_temp);
     }
-
+    MPI_Finalize();
     return 0;
 }

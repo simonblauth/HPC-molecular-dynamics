@@ -8,10 +8,10 @@
 // Holds the current state of a simulation.
 class Atoms {
   public:
-    Names_t names;
     Positions_t positions;
     Velocities_t velocities;
     Forces_t forces;
+    Names_t names;
     double mass = 1.0;
 
     Atoms(const size_t nb_atoms)

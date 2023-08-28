@@ -43,9 +43,9 @@ TEST(DucastelleTest, Forces) {
     // we create a cubic lattice with random displacements
     atoms.positions.setRandom();  // random numbers between -1 and 1
     atoms.positions *= 0.1;
-    for (int x{0}, i{0}; x < nx; ++x) {
-        for (int y{0}; y < ny; ++y) {
-            for (int z{0}; z < nz; ++z, ++i) {
+    for (size_t x{0}, i{0}; x < nx; ++x) {
+        for (size_t y{0}; y < ny; ++y) {
+            for (size_t z{0}; z < nz; ++z, ++i) {
                 atoms.positions(0, i) += x * lattice_constant;
                 atoms.positions(1, i) += y * lattice_constant;
                 atoms.positions(2, i) += z * lattice_constant;
@@ -59,9 +59,9 @@ TEST(DucastelleTest, Forces) {
     Forces_t forces0{atoms.forces};
 
     // loop over all atoms and compute forces from a finite differences approximation
-    for (int i{0}; i < atoms.nb_atoms(); ++i) {
+    for (size_t i{0}; i < atoms.nb_atoms(); ++i) {
         // loop over all Cartesian directions
-        for (int j{0}; j < 3; ++j) {
+        for (size_t j{0}; j < 3; ++j) {
             // move atom to the right
             atoms.positions(j, i) += delta;
             neighbor_list.update(atoms);

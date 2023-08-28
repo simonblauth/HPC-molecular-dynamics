@@ -36,7 +36,7 @@ std::tuple<Names_t, Positions_t> read_xyz(const std::string &filename) {
 
         // First line contains number of atoms
         std::getline(file, line);
-        int nb_atoms;
+        size_t nb_atoms;
         std::istringstream(line) >> nb_atoms;
 
         // Second line contains a comment - in extended XYZ this line contains auxiliary information
@@ -48,7 +48,7 @@ std::tuple<Names_t, Positions_t> read_xyz(const std::string &filename) {
         positions.setZero();
 
         // Now follows a line for each atom
-        for (int i = 0; i < nb_atoms; ++i) {
+        for (size_t i = 0; i < nb_atoms; ++i) {
             std::getline(file, line);
             std::istringstream(line) >> names[i] >> positions(0, i) >> positions(1, i) >> positions(2, i);
         }
@@ -71,7 +71,7 @@ std::tuple<Names_t, Positions_t, Velocities_t> read_xyz_with_velocities(const st
 
         // First line contains number of atoms
         std::getline(file, line);
-        int nb_atoms;
+        size_t nb_atoms;
         std::istringstream(line) >> nb_atoms;
 
         // Second line contains a comment - in extended XYZ this line contains
@@ -86,7 +86,7 @@ std::tuple<Names_t, Positions_t, Velocities_t> read_xyz_with_velocities(const st
         velocities.setZero();
 
         // Now follows a line for each atom
-        for (int i = 0; i < nb_atoms; ++i) {
+        for (size_t i = 0; i < nb_atoms; ++i) {
             std::getline(file, line);
             std::istringstream(line) >> names[i] >> positions(0, i) >> positions(1, i) >> positions(2, i)
                                      >> velocities(0, i) >> velocities(1, i) >> velocities(2, i);
@@ -110,7 +110,7 @@ void write_xyz(std::ofstream &file, Atoms &atoms) {
     file << std::endl;
 
     // Element name, position
-    for (int i = 0; i < atoms.nb_atoms(); ++i) {
+    for (size_t i = 0; i < atoms.nb_atoms(); ++i) {
         auto w = atoms.names[i].length();
         file << std::setw(w)  << atoms.names[i] << " "
              << std::setw(10) << atoms.positions.col(i).transpose()
