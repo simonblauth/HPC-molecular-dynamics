@@ -129,5 +129,5 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, int nb_local,
                   double cutoff, double A, double xi, double p, double q,
                   double re) {
     auto energies = _ducastelle(atoms, neighbor_list, cutoff, A, xi, p, q, re);
-    return energies(Eigen::all, Eigen::seq(0, nb_local)).sum();
+    return energies(Eigen::seq(0, nb_local - 1)).sum();
 }
