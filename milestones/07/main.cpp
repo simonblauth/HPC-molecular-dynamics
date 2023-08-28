@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     // initialize simulation
     Atoms atoms(names, positions);
 
-    atoms.mass = parser.get<double>("--mass") * 103.6;
+    atoms.set_mass(parser.get<double>("--mass") * 103.6);
     double timestep = parser.get<double>("--timestep");
     size_t max_timesteps = parser.get<size_t>("--max_timesteps");
     size_t relaxation_time = parser.get<size_t>("--relaxation_time");

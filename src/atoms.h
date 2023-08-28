@@ -7,21 +7,25 @@
 
 // Holds the current state of a simulation.
 class Atoms {
+  private:
+    double mass_ = 1.0;
   public:
     Positions_t positions;
     Velocities_t velocities;
     Forces_t forces;
+    Masses_t masses;
     Names_t names;
-    double mass = 1.0;
 
     Atoms(const size_t nb_atoms)
         : positions(3, nb_atoms),
           velocities(3, nb_atoms),
           forces(3, nb_atoms),
+          masses(1, nb_atoms),
           names(nb_atoms) {
         positions.setZero();
         velocities.setZero();
         forces.setZero();
+        masses.setOnes();
         std::fill(names.begin(), names.end(), "H");
     }
 
@@ -29,9 +33,11 @@ class Atoms {
         : positions{p},
           velocities{3, p.cols()},
           forces{3, p.cols()},
+          masses{1, p.cols()},
           names(p.cols()) {
         velocities.setZero();
         forces.setZero();
+        masses.setOnes();
         std::fill(names.begin(), names.end(), "H");
     }
 
@@ -39,18 +45,22 @@ class Atoms {
         : positions{p},
           velocities{3, p.cols()},
           forces{3, p.cols()},
+          masses{1, p.cols()},
           names{n} {
         velocities.setZero();
         forces.setZero();
+        masses.setOnes();
     }
 
     Atoms(const Positions_t &p, const Velocities_t &v)
         : positions{p},
           velocities{v},
           forces{3, p.cols()},
+          masses{1, p.cols()},
           names(p.cols()) {
         assert(p.cols() == v.cols());
         forces.setZero();
+        masses.setOnes();
         std::fill(names.begin(), names.end(), "H");
     }
 
@@ -58,9 +68,28 @@ class Atoms {
         : positions{p},
           velocities{v},
           forces{3, p.cols()},
+          masses{1, p.cols()},
           names{n} {
         assert(p.cols() == v.cols());
         forces.setZero();
+        masses.setOnes();
+    }
+
+    void resize(size_t size) {
+        positions.resize(3, size);
+        velocities.resize(3, size);
+        forces.resize(3, size);
+        masses.resize(1, size);
+        names.resize(size);
+    }
+
+    void set_mass(double mass) {
+        mass_ = mass;
+        masses.fill(mass);
+    }
+
+    double get_mass() {
+        return mass_;
     }
 
     size_t nb_atoms() const {
@@ -68,7 +97,7 @@ class Atoms {
     }
 
     double kinetic_energy() const {
-        return mass * velocities.cwiseAbs2().sum() / 2;
+        return mass_ * velocities.cwiseAbs2().sum() / 2;
     }
 
     // returns temperature in 1e-5 * K, so scale with 1e5 to get K

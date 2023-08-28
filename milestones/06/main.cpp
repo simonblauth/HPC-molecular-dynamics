@@ -35,8 +35,8 @@ int main(int argc, char *argv[]) {
 
     Atoms atoms = init_cubic_lattice(nb_atoms_per_lattice, lattice_distance);
 
-    atoms.mass = parser.get<double>("--mass");
-    double timestep = parser.get<double>("--timestep") * std::sqrt(atoms.mass * sigma * sigma / epsilon);
+    atoms.set_mass(parser.get<double>("--mass"));
+    double timestep = parser.get<double>("--timestep") * std::sqrt(atoms.get_mass() * sigma * sigma / epsilon);
     size_t max_timesteps = parser.get<size_t>("--max_timesteps");
 
     double target_temperaure = parser.get<double>("--temperature") * 1e-5;

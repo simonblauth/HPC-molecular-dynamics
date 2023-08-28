@@ -12,10 +12,6 @@ set(MY_MD_HEADERS
   xyz.h
 )
 
-if (MPI_FOUND)
-  set(MY_MD_HEADERS ${MY_MD_HEADERS} mpi_support.h)
-endif()
-
 # List of implementation files
 set(MY_MD_CPP
   ducastelle.cpp
@@ -26,6 +22,11 @@ set(MY_MD_CPP
   verlet.cpp
   xyz.cpp
 )
+
+if (MPI_FOUND)
+  set(MY_MD_HEADERS ${MY_MD_HEADERS} domain.h mpi_support.h)
+  set(MY_MD_CPP ${MY_MD_CPP} domain.cpp)
+endif()
 
 # Create a static library
 add_library(my_md_lib STATIC ${MY_MD_CPP} ${MY_MD_HEADERS})

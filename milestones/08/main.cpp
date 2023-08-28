@@ -1,6 +1,6 @@
 #include "atoms.h"
 #include "ducastelle.h"
-#include "mpi.h"
+#include "mpi_support.h"
 #include "neighbors.h"
 #include "simulation_utils.h"
 #include "types.h"
@@ -12,9 +12,9 @@
 namespace fs = std::filesystem;
 
 int main(int argc, char *argv[]) {
-    MPI_Init(&argc, &argv);
+    MPI::init_guard guard(&argc, &argv);
     // argument parsing
-    argparse::ArgumentParser parser = default_parser("milestone 07");
+    argparse::ArgumentParser parser = default_parser("milestone 08");
     try {
         parser.parse_args(argc, argv);
     } catch (const std::runtime_error &err) {
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     // initialize simulation
     Atoms atoms(names, positions);
 
-    atoms.mass = parser.get<double>("--mass") * 103.6;
+    atoms.set_mass(parser.get<double>("--mass") * 103.6);
     double timestep = parser.get<double>("--timestep");
     size_t max_timesteps = parser.get<size_t>("--max_timesteps");
     size_t relaxation_time = parser.get<size_t>("--relaxation_time");
@@ -71,6 +71,6 @@ int main(int argc, char *argv[]) {
         }
         writer.write_stats(ts, ekin, epot, avg_temp);
     }
-    MPI_Finalize();
+
     return 0;
 }

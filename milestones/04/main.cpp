@@ -29,19 +29,19 @@ int main(int argc, char *argv[]) {
     Writer writer(pwd, parser);
 
     // initialize simulation
-    atoms.mass = parser.get<double>("--mass");
+    atoms.set_mass(parser.get<double>("--mass"));
     double sigma = parser.get<double>("--sigma");
     double epsilon = parser.get<double>("--epsilon");
-    double timestep = parser.get<double>("--timestep") * std::sqrt(atoms.mass * sigma * sigma / epsilon);
+    double timestep = parser.get<double>("--timestep") * std::sqrt(atoms.get_mass() * sigma * sigma / epsilon);
     size_t max_timesteps = parser.get<size_t>("--max_timesteps");
 
     // simulate
     for (size_t ts = 0; ts < max_timesteps; ts++) {
         writer.write_traj(ts, atoms);
         verlet_step1(atoms.positions, atoms.velocities, atoms.forces, timestep,
-                     atoms.mass);
+                     atoms.get_mass());
         double epot = lj_direct_summation(atoms, epsilon, sigma);
-        verlet_step2(atoms.velocities, atoms.forces, timestep, atoms.mass);
+        verlet_step2(atoms.velocities, atoms.forces, timestep, atoms.get_mass());
         double ekin = atoms.kinetic_energy();
         double temp = atoms.current_temperature();
         writer.write_stats(ts, ekin, epot, temp);
