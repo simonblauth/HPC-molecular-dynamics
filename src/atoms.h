@@ -20,7 +20,7 @@ class Atoms {
         : positions(3, nb_atoms),
           velocities(3, nb_atoms),
           forces(3, nb_atoms),
-          masses(1, nb_atoms),
+          masses(nb_atoms),
           names(nb_atoms) {
         positions.setZero();
         velocities.setZero();
@@ -33,7 +33,7 @@ class Atoms {
         : positions{p},
           velocities{3, p.cols()},
           forces{3, p.cols()},
-          masses{1, p.cols()},
+          masses{p.cols()},
           names(p.cols()) {
         velocities.setZero();
         forces.setZero();
@@ -45,7 +45,7 @@ class Atoms {
         : positions{p},
           velocities{3, p.cols()},
           forces{3, p.cols()},
-          masses{1, p.cols()},
+          masses{p.cols()},
           names{n} {
         velocities.setZero();
         forces.setZero();
@@ -56,7 +56,7 @@ class Atoms {
         : positions{p},
           velocities{v},
           forces{3, p.cols()},
-          masses{1, p.cols()},
+          masses{p.cols()},
           names(p.cols()) {
         assert(p.cols() == v.cols());
         forces.setZero();
@@ -68,7 +68,7 @@ class Atoms {
         : positions{p},
           velocities{v},
           forces{3, p.cols()},
-          masses{1, p.cols()},
+          masses{p.cols()},
           names{n} {
         assert(p.cols() == v.cols());
         forces.setZero();
@@ -79,7 +79,7 @@ class Atoms {
         positions.resize(3, size);
         velocities.resize(3, size);
         forces.resize(3, size);
-        masses.resize(1, size);
+        masses.resize(size);
         names.resize(size);
     }
 
