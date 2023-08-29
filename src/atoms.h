@@ -110,6 +110,10 @@ class Atoms {
         return mass_ * velocities.cwiseAbs2().sum() / 2;
     }
 
+    double kinetic_energy(int max_atoms) const {
+        return mass_ * velocities(Eigen::all, Eigen::seq(0, max_atoms - 1)).cwiseAbs2().sum() / 2;
+    }
+
     // returns temperature in 1e-5 * K, so scale with 1e5 to get K
     double current_temperature() const {
       double k_B = 8.617333262;
