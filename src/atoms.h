@@ -16,19 +16,6 @@ class Atoms {
     Masses_t masses;
     Names_t names;
 
-    Atoms(const Atoms& other)
-        : positions(3, other.nb_atoms()),
-          velocities(3, other.nb_atoms()),
-          forces(3, other.nb_atoms()),
-          masses(other.nb_atoms()),
-          names(other.nb_atoms()) {
-        positions = other.positions;
-        velocities = other.velocities;
-        forces = other.forces;
-        masses = other.masses;
-        names = other.names;
-    }
-
     Atoms(const size_t nb_atoms)
         : positions(3, nb_atoms),
           velocities(3, nb_atoms),
@@ -111,7 +98,7 @@ class Atoms {
         masses.fill(mass);
     }
 
-    double get_mass() {
+    double get_mass() const {
         return mass_;
     }
 
