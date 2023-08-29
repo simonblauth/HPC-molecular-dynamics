@@ -56,18 +56,16 @@ int main(int argc, char *argv[]) {
     // domain setup
     auto max_pos = atoms.positions.rowwise().maxCoeff();
     auto min_pos = atoms.positions.rowwise().minCoeff();
-    std::cout << worker << " min, max: \n" <<  min_pos << "\n" << max_pos << std::endl;
-    atoms.positions.colwise() += -min_pos + max_pos * 0.1;
-    std::cout << worker << " updated positions" << std::endl;
-    auto box_size = max_pos - min_pos + max_pos * 0.2;
+    auto box_size_pre = max_pos - min_pos;
+    auto offset = box_size_pre * parser.get<double>("--shift_atoms");
+    auto box_size = box_size_pre + 2 * offset;
+    atoms.positions.colwise() += offset;
     std::cout << worker << " computed box size: \n" << box_size << std::endl;
-    auto max_pos_after = atoms.positions.rowwise().maxCoeff();
-    auto min_pos_after = atoms.positions.rowwise().minCoeff();
-    std::cout << worker << " min, max after update: \n" <<  min_pos_after << "\n" << max_pos_after << std::endl;
+    
 
     auto ds = parser.get<std::vector<int>>("--domains");
     Domain domain(MPI_COMM_WORLD,
-        {box_size[0], box_size[1], box_size[2]},
+        {box_size(0), box_size(1), box_size(2)},
         {ds[0], ds[1], ds[2]},
         {0, 0, 0}
     );

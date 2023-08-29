@@ -151,7 +151,7 @@ argparse::ArgumentParser default_parser(const char* name) {
         .scan<'g', double>();
     // cutoff
     parser.add_argument("--cutoff")
-        .help("The amximum distance for the neighbor search.")
+        .help("The maximum distance for the neighbor search.")
         .nargs(1)
         .default_value<double>(5.0)
         .scan<'g', double>();
@@ -160,6 +160,11 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(3)
         .default_value(std::vector<int>{1, 1, 1})
         .scan<'i', int>();
+    parser.add_argument("--shift_atoms")
+        .help("Shift the atoms by a percentage of the box size (also increases box size) to have more space.")
+        .nargs(1)
+        .default_value<double>(0.1)
+        .scan<'g', double>();
 
     return parser;
 }
