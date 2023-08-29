@@ -113,6 +113,7 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<double>(1.0)
         .scan<'g', double>();
+    // lennard-jones
     parser.add_argument("--sigma")
         .help("The σ parameter for the lennard-jones potential.")
         .nargs(1)
@@ -149,7 +150,7 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<double>(10)
         .scan<'g', double>();
-    // cutoff
+    // domain
     parser.add_argument("--cutoff")
         .help("The maximum distance for the neighbor search.")
         .nargs(1)
@@ -160,10 +161,25 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(3)
         .default_value(std::vector<int>{1, 1, 1})
         .scan<'i', int>();
+    parser.add_argument("--periodic")
+        .help("The periodicity of domains in x, y, z direction, 1 means periodic, 0 not.")
+        .nargs(3)
+        .default_value(std::vector<int>{0, 0, 0})
+        .scan<'i', int>();
     parser.add_argument("--shift_atoms")
         .help("Shift the atoms by a percentage of the box size (also increases box size) to have more space.")
         .nargs(1)
         .default_value<double>(0.1)
+        .scan<'g', double>();
+    parser.add_argument("--stretch_factor")
+        .help("Stretch the domain in z-direction by <stretch_factor> * initial_domain_length.")
+        .nargs(1)
+        .default_value<double>(1.0)
+        .scan<'g', double>();
+    parser.add_argument("--stretch_interval")
+        .help("Stretch the domain in z-direction every <stretch_interval> steps.")
+        .nargs(1)
+        .default_value<double>(100)
         .scan<'g', double>();
 
     return parser;

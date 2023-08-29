@@ -12,6 +12,40 @@
 
 namespace fs = std::filesystem;
 
+
+Domain init_domain(Atoms& atoms, argparse::ArgumentParser parser) {
+    auto ds = parser.get<std::vector<int>>("--domains");
+    auto periodic = parser.get<std::vector<int>>("--periodic");
+    double shift = parser.get<double>("--shift_atoms");
+
+    auto max_pos = atoms.positions.rowwise().maxCoeff();
+    auto min_pos = atoms.positions.rowwise().minCoeff();
+    // bounding box
+    Eigen::Array3d bbox{max_pos(0) - min_pos(0),
+                        max_pos(1) - min_pos(1),
+                        max_pos(2) - min_pos(2)};
+    double offset_x = bbox(0) * shift - min_pos(0);
+    double offset_y = bbox(1) * shift - min_pos(1);
+    double offset_z = bbox(2) * shift - min_pos(2);
+    Eigen::Array3d offset{offset_x, offset_y, offset_z};
+    for (size_t i = 0; i < 3; i++) {
+        if (periodic[i] == 0) {
+            atoms.positions.row(i) += offset(i);
+        }
+    }
+
+    double box_sz_x = periodic[0] == 0 ? bbox(0) + 2 * bbox(0) * shift : max_pos(0) + min_pos(0);
+    double box_sz_y = periodic[1] == 0 ? bbox(1) + 2 * bbox(1) * shift : max_pos(1) + min_pos(1);
+    double box_sz_z = periodic[2] == 0 ? bbox(2) + 2 * bbox(2) * shift : max_pos(2) + min_pos(1);
+
+    Domain domain(MPI_COMM_WORLD,
+        {box_sz_x, box_sz_y, box_sz_z},
+        {ds[0], ds[1], ds[2]},
+        {periodic[0], periodic[1], periodic[2]}
+    );
+    return domain;
+}
+
 int main(int argc, char *argv[]) {
     MPI::init_guard guard(&argc, &argv);
     std::stringstream ss;
@@ -54,38 +88,7 @@ int main(int argc, char *argv[]) {
     std::cout << worker << " initialized neighbors" << std::endl;
 
     // domain setup
-    auto max_pos = atoms.positions.rowwise().maxCoeff();
-    auto min_pos = atoms.positions.rowwise().minCoeff();
-    double bs_x = max_pos(0) - min_pos(0);
-    double bs_y = max_pos(1) - min_pos(1);
-    double bs_z = max_pos(2) - min_pos(2);
-    double shift = parser.get<double>("--shift_atoms");
-    double offset_x = bs_x * shift - min_pos(0) + 0.001;
-    double offset_y = bs_y * shift - min_pos(1) + 0.001;
-    double offset_z = bs_z * shift - min_pos(2) + 0.001;
-    atoms.positions.row(0) += offset_x;
-    atoms.positions.row(1) += offset_y;
-    // atoms.positions.row(2) += offset_z;
-    double box_sz_x = bs_x + 2 * bs_x * shift;
-    double box_sz_y = bs_y + 2 * bs_y * shift;
-    double box_sz_z = max_pos(2);
-    // auto box_size_pre = max_pos - min_pos;
-    // auto offset = box_size_pre * parser.get<double>("--shift_atoms");
-    // auto box_size = box_size_pre + 2 * offset;
-    // atoms.positions.colwise() += offset;
-    std::cout << worker << " computed box size: \n" << box_sz_x << box_sz_y << box_sz_z << std::endl;
-    auto max_pos_after = atoms.positions.rowwise().maxCoeff();
-    auto min_pos_after = atoms.positions.rowwise().minCoeff();
-    std::cout << worker << " min, max: \n" << min_pos_after << max_pos_after <<
-    std::endl;
-
-    auto ds = parser.get<std::vector<int>>("--domains");
-    Domain domain(MPI_COMM_WORLD,
-        {box_sz_x, box_sz_y, box_sz_z},
-        {ds[0], ds[1], ds[2]},
-        // TODO: no offset if periodic
-        {0, 0, 1}
-    );
+    auto domain = init_domain(atoms, parser);
     std::cout << worker << " initialized domain" << std::endl;
 
     // simulate
