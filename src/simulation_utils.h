@@ -18,6 +18,7 @@ private:
     std::ofstream traj;
 
   public:
+    Writer() = default;
     Writer(fs::path pwd, argparse::ArgumentParser parser) {
         write_to_csv = parser.is_used("--csv");
         write_to_xyz = parser.is_used("--traj");

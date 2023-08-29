@@ -13,6 +13,10 @@ project(
   HOMEPAGE_URL "https://imtek-simulation.github.io/MolecularDynamics/"
 )
 
+# TODO: remove this
+# add_compile_options(-fsanitize=address)
+# add_link_options(-fsanitize=address)
+
 # So that tests can work
 enable_testing()
 
