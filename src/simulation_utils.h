@@ -55,13 +55,15 @@ private:
         csv.close();
         traj.close();
     }
-    void write_stats(size_t timestep, double ekin, double epot, double temp) {
+    void write_stats(size_t timestep, double ekin, double epot, double temp = 0, double stress = 0) {
         if (timestep % output_interval == 0) {
             if (write_to_console) {
+                std::cout << "Frame: " << (int)(timestep / output_interval) << " ";
                 std::cout << "Total Energy: " << ekin + epot << ", ";
                 std::cout << "Kinetic Energy: " << ekin << ", ";
                 std::cout << "Potential Energy: " << epot << ", ";
-                std::cout << "Temperature: " << temp << std::endl;
+                std::cout << "Temperature: " << temp << ", ";
+                std::cout << "Stress: " << stress << std::endl;
             }
             if (write_to_csv) {
                 csv << timestep << "," << ekin + epot << "," << ekin << "," << epot << "," << temp << std::endl;
@@ -171,16 +173,16 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<double>(0.1)
         .scan<'g', double>();
-    parser.add_argument("--stretch_factor")
-        .help("Stretch the domain in z-direction by <stretch_factor> * initial_domain_length.")
+    parser.add_argument("--stretch")
+        .help("Stretch the domain in z-direction by <stretch> angstrom.")
         .nargs(1)
         .default_value<double>(1.0)
         .scan<'g', double>();
     parser.add_argument("--stretch_interval")
         .help("Stretch the domain in z-direction every <stretch_interval> steps.")
         .nargs(1)
-        .default_value<double>(100)
-        .scan<'g', double>();
+        .default_value<size_t>(100)
+        .scan<'u', size_t>();
 
     return parser;
 }

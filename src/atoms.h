@@ -119,10 +119,17 @@ class Atoms {
       double k_B = 8.617333262;
       return kinetic_energy() / (nb_atoms() * k_B) * 2 / 3;
     }
+    double current_temperature(int max_atoms) const {
+      double k_B = 8.617333262;
+      return kinetic_energy(max_atoms) / (max_atoms * k_B) * 2 / 3;
+    }
 
     // returns temperature in Kelvin
     double current_temperature_kelvin() const {
       return current_temperature() * 1e5;
+    }
+    double current_temperature_kelvin(int max_atoms) const {
+      return current_temperature(max_atoms) * 1e5;
     }
 };
 

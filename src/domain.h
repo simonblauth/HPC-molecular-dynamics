@@ -106,6 +106,16 @@ public:
     int coordinate(int dim) const { return coordinate_(dim); }
 
     /*
+     * Cartesian decomposition of grid.
+     */
+    Eigen::Array3i decomposition() const { return decomposition_; }
+
+    /*
+     * Cartesian decomposition of grid in dimension dim.
+     */
+    int decomposition(int dim) const { return decomposition_(dim); }
+
+    /*
      * Number of process-local atoms.
      */
     int nb_local() const { return nb_local_; }
