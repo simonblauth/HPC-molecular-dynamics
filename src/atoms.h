@@ -16,6 +16,19 @@ class Atoms {
     Masses_t masses;
     Names_t names;
 
+    Atoms(const Atoms& other)
+        : positions(3, other.nb_atoms()),
+          velocities(3, other.nb_atoms()),
+          forces(3, other.nb_atoms()),
+          masses(other.nb_atoms()),
+          names(other.nb_atoms()) {
+        positions = other.positions;
+        velocities = other.velocities;
+        forces = other.forces;
+        masses = other.masses;
+        names = other.names;
+    }
+
     Atoms(const size_t nb_atoms)
         : positions(3, nb_atoms),
           velocities(3, nb_atoms),
@@ -75,12 +88,22 @@ class Atoms {
         masses.setOnes();
     }
 
+    void resize(Eigen::Array3Xd &a, size_t size) {
+        size_t original_size = a.cols();
+        Eigen::Array3Xd tmp = a; // should do deepcopy
+        a.resize(3, size); // reallocates memory
+        size_t upper = std::min(original_size, size);
+        a(Eigen::all, Eigen::seq(0, upper - 1)) = tmp(Eigen::all, Eigen::seq(0, upper - 1)); // copy data back
+    }
+
     void resize(size_t size) {
-        positions.resize(3, size);
-        velocities.resize(3, size);
-        forces.resize(3, size);
+        resize(positions, size);
+        resize(velocities, size);
+        resize(forces, size);
         masses.resize(size);
-        names.resize(size);
+        masses.fill(mass_); // masses are the same anyways
+        // no need to resize names
+        // names.resize(size); // vector resize preserves data
     }
 
     void set_mass(double mass) {
