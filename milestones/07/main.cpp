@@ -12,11 +12,6 @@
 
 namespace fs = std::filesystem;
 
-void deposit_energy(Atoms& atoms, double delta_Q) {
-    double ekin = atoms.kinetic_energy();
-    double lambda = std::sqrt(1 + delta_Q / ekin);
-    atoms.velocities *= lambda;
-}
 
 int main(int argc, char *argv[]) {
     // argument parsing
@@ -43,29 +38,38 @@ int main(int argc, char *argv[]) {
     atoms.set_mass(parser.get<double>("--mass") * 103.6);
     double timestep = parser.get<double>("--timestep");
     size_t max_timesteps = parser.get<size_t>("--max_timesteps");
+
     size_t init_timesteps = parser.get<size_t>("--initial_relaxation");
     size_t relaxation_time = parser.get<size_t>("--relaxation_time");
     double target_temperaure = parser.get<double>("--temperature") * 1e-5;
-    size_t relaxation_time_deposit = parser.get<size_t>("--relaxation_time_deposit");
+    double relaxation_increase = parser.get<double>("--relaxation_time_increase");
+    ThermostatScheduler scheduler(relaxation_increase, relaxation_time);
+    Equilibrium equilibrium(relaxation_increase, relaxation_time,
+                            target_temperaure, timestep, init_timesteps);
+
     double delta_Q = parser.get<double>("--deposit_energy");
-    double alpha = parser.get<double>("--smoothing");
+    size_t relaxation_time_deposit = parser.get<size_t>("--relaxation_time_deposit");
+    EnergyPump pump(relaxation_time_deposit, delta_Q);
 
     double cutoff = parser.get<double>("--cutoff");
     NeighborList neighbor_list(cutoff);
 
     // relax
+    std::cout << "Equilibriating the system..." << std::endl;
     for (size_t i = 0; i < init_timesteps; i++) {
+        // writer.write_traj(i, atoms);
         verlet_step1(atoms, timestep);
         neighbor_list.update(atoms);
         double epot = ducastelle(atoms, neighbor_list, cutoff);
         verlet_step2(atoms, timestep);
-        berendsen_thermostat(atoms, target_temperaure, timestep, relaxation_time);
+        equilibrium.step(atoms, i, atoms.current_temperature_kelvin());
     }
-    
 
     // simulate
     bool relaxed = false;
+    double alpha = parser.get<double>("--smoothing");
     ExponentialAverage avg_temp(alpha, atoms.current_temperature_kelvin());
+    std::cout << "Starting simulation" << std::endl;
     for (size_t ts = 0; ts < max_timesteps; ts++) {
         writer.write_traj(ts, atoms);
         verlet_step1(atoms, timestep);
@@ -74,15 +78,10 @@ int main(int argc, char *argv[]) {
         verlet_step2(atoms, timestep);
         double ekin = atoms.kinetic_energy();
         writer.write_stats(ts, ekin, epot, avg_temp.get());
-        if (relaxed) {
+        if (pump.relaxed()) {
             avg_temp.update(atoms.current_temperature_kelvin());
         }
-        if (ts % (relaxation_time_deposit * 2) == 0) {
-            deposit_energy(atoms, delta_Q);
-            relaxed = false;
-        } else if (ts % relaxation_time_deposit == 0) {
-            relaxed = true;
-        }
+        pump.step(atoms, ts, ekin);
     }
 
     return 0;

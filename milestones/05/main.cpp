@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
         verlet_step2(atoms, timestep);
         berendsen_thermostat(atoms, target_temperaure, timestep, relaxation_time);
         double ekin = atoms.kinetic_energy();
-        double temp = atoms.current_temperature();
+        double temp = atoms.current_temperature_kelvin();
         writer.write_stats(ts, ekin, epot, temp);
     }
     // TODO: equilibrium strategy with changing relaxation time

@@ -154,6 +154,11 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<size_t>(1000)
         .scan<'u', size_t>();
+    parser.add_argument("--relaxation_time_increase")
+        .help("Factor to increase the relaxation time.")
+        .nargs(1)
+        .default_value<double>(2.0)
+        .scan<'g', double>();
     parser.add_argument("--relaxation_time_deposit")
         .help("The relaxation time for the energy deposit (in Timesteps).")
         .nargs(1)
