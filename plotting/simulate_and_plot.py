@@ -5,7 +5,7 @@ import os
 import os.path as osp
 import tempfile
 import time
-from plot_csv import plot_total_energy
+from plot_csv import make_plot
 from typing import Optional
 
 
@@ -20,7 +20,10 @@ def total_energy(simulator: str):
         filepaths.append(outpath)
         os.makedirs(osp.dirname(outpath), exist_ok=True)
         os.system(f"{simulator} --max_timesteps 100 --silent --timestep {ts} --output_interval 1 --csv {outpath}")
-    plot_total_energy(filepaths, labels)
+    make_plot(filepaths, labels,
+              x="Timestep", y="Total Energy",
+              xlabel="Timestep", ylabel="Total Energy"
+              )
 
 
 def simulation_times(simulators: list[str], labels: Optional[list[str]] = None):
@@ -49,9 +52,23 @@ def simulation_time(simulator: str, label):
     plt.plot(nb_atoms, simulation_times, label=label)
 
 
+def temperature_over_energy(simulator: str, input_files: list[str]):
+    filepaths = []
+    labels = [osp.basename(path).split('.')[0] for path in filepaths]
+    for infile in input_files:
+        tmp = tempfile.gettempdir()
+        filename = osp.basename(infile).split('.')[0] + ".csv"
+        outpath = osp.join(tmp, "hpc_sims", filename)
+        filepaths.append(outpath)
+        os.makedirs(osp.dirname(outpath), exist_ok=True)
+        # TODO: fix deposit energies
+        os.system(f"{simulator} -i {infile} --cutoff 7 --max_timesteps 50000 --output_interval 100 --timestep 1 --mass 197 --relaxation_time 100 --deposit_energy 0.5 --relaxation_time_deposit 20 --csv {outpath} --initial_relaxation 15000 --temperature 100 --smoothing 0.008 --relaxation_time_increase 10.0")
+    make_plot(filepaths, labels, "Total Energy", "Temperature", ylabel="Temperature in Kelvin", zero_x=True)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate and Plot.")
-    parser.add_argument("--mode", type=str, choices=["total_energy", "simulation_time"], required=True)
+    parser.add_argument("--mode", type=str, choices=["total_energy", "simulation_time", "temperature_over_energy"], required=True)
     parser.add_argument("--simulators", nargs='+', type=str, required=True)
     parser.add_argument("--labels", nargs='+', type=str)
     args = parser.parse_args()
@@ -61,3 +78,6 @@ if __name__ == "__main__":
             total_energy(args.simulators[0])
         case "simulation_time":
             simulation_times(args.simulators, args.labels)
+        case "temperature_over_energy":
+            # TODO: input files arg
+            temperature_over_energy(args.simulators[0], args.input_files)
