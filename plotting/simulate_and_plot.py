@@ -5,7 +5,7 @@ import os
 import os.path as osp
 import tempfile
 import time
-from plot_energy import plot_total_energy
+from plot_csv import plot_total_energy
 from typing import Optional
 
 
