@@ -1,6 +1,7 @@
 # List of headers
 set(MY_MD_HEADERS
   atoms.h
+  average.h
   ducastelle.h
   hello.h
   lj_direct_summation.h

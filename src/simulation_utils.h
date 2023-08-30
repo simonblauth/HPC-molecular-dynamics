@@ -35,7 +35,7 @@ private:
             }
 
             csv.open(csv_path);
-            csv << "Timestep,Total Energy,Kinetic Energy,Potential Energy,Temperature"
+            csv << "Timestep,Total Energy,Kinetic Energy,Potential Energy,Temperature,Stress"
                 << std::endl;
         }
         if (write_to_xyz) {
@@ -66,7 +66,7 @@ private:
                 std::cout << "Stress: " << stress << std::endl;
             }
             if (write_to_csv) {
-                csv << timestep << "," << ekin + epot << "," << ekin << "," << epot << "," << temp << std::endl;
+                csv << timestep << "," << ekin + epot << "," << ekin << "," << epot << "," << temp << "," << stress << std::endl;
             }
         }
     }
@@ -75,7 +75,9 @@ private:
             write_xyz(traj, atoms);
         }
     }
+    size_t get_output_interval() { return output_interval; }
 };
+
 
 // constructs an ArgumentParser with default arguments used for most simulations
 argparse::ArgumentParser default_parser(const char* name) {
@@ -99,6 +101,11 @@ argparse::ArgumentParser default_parser(const char* name) {
     parser.add_argument("-i", "--input")
         .help("Takes a path for the input file.")
         .nargs(1);
+    parser.add_argument("--smoothing")
+        .help("Smoothing factor for exponential average.")
+        .nargs(1)
+        .default_value<double>(0.01)
+        .scan<'g', double>();
     // basic simulation parameters
     parser.add_argument("--max_timesteps")
         .help("The number of timesteps to run the simulation for.")
@@ -147,11 +154,21 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<size_t>(1000)
         .scan<'u', size_t>();
+    parser.add_argument("--relaxation_time_deposit")
+        .help("The relaxation time for the energy deposit (in Timesteps).")
+        .nargs(1)
+        .default_value<size_t>(1000)
+        .scan<'u', size_t>();
     parser.add_argument("--deposit_energy")
         .help("The amount of energy to deposit into the system every interval.")
         .nargs(1)
         .default_value<double>(10)
         .scan<'g', double>();
+    parser.add_argument("--initial_relaxation")
+        .help("Number of time steps to let the system relax initially.")
+        .nargs(1)
+        .default_value<size_t>(1000)
+        .scan<'u', size_t>();
     // domain
     parser.add_argument("--cutoff")
         .help("The maximum distance for the neighbor search.")

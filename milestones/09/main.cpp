@@ -1,4 +1,5 @@
 #include "atoms.h"
+#include "average.h"
 #include "domain.h"
 #include "ducastelle.h"
 #include "mpi_support.h"
@@ -117,8 +118,8 @@ int main(int argc, char *argv[]) {
     domain.enable(atoms);
     std::cout << worker << " natoms: " << atoms.nb_atoms() << std::endl;
     std::cout << worker << " enabled domain" << std::endl;
-    double avg_stress = 0;
-    double avg_temp = 0;
+    CumulativeAverage avg_stress(output_interval);
+    CumulativeAverage avg_temp(output_interval);
     for (size_t ts = 0; ts < max_timesteps; ts++) {
         verlet_step1(atoms, timestep);
         domain.exchange_atoms(atoms);
@@ -145,21 +146,20 @@ int main(int argc, char *argv[]) {
         double ekin = MPI::allreduce(ekin_local, MPI_SUM, MPI_COMM_WORLD);
         double epot = MPI::allreduce(epot_local, MPI_SUM, MPI_COMM_WORLD);
 
-        size_t step = ts % output_interval + 1;
         // cumulative average over temp
         double temp = MPI::allreduce(temp_local, MPI_SUM, MPI_COMM_WORLD) / domain.size();
-        avg_temp += (temp - avg_temp) / step;
+        avg_temp.update(temp, ts);
 
         // cumulative average over stress
         double stress = MPI::allreduce(stress_local, MPI_SUM, MPI_COMM_WORLD);
         stress /= (domain.domain_length(0) * domain.domain_length(1) * domain.decomposition(2));
-        avg_stress += (stress - avg_stress) / step;
+        avg_stress.update(stress, ts);
 
         if (ts % output_interval == 0) {
             domain.disable(atoms);
             if (MPI::comm_rank(MPI_COMM_WORLD) == 0) {
                 writer->write_traj(ts, atoms);
-                writer->write_stats(ts, ekin, epot, avg_temp, avg_stress);
+                writer->write_stats(ts, ekin, epot, avg_temp.get(), avg_stress.get());
             }
             domain.enable(atoms);
             avg_stress = 0;
