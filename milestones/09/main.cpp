@@ -9,6 +9,7 @@
 #include "thermostat.h"
 #include "types.h"
 #include "verlet.h"
+#include "writer_mpi.h"
 #include <argparse/argparse.hpp>
 #include <filesystem>
 #include <iostream>
@@ -17,9 +18,6 @@ namespace fs = std::filesystem;
 
 int main(int argc, char *argv[]) {
     MPI::init_guard guard(&argc, &argv);
-    std::stringstream ss;
-    ss << "Worker " << MPI::comm_rank(MPI_COMM_WORLD) << ": ";
-    auto worker = ss.str();
     // argument parsing
     argparse::ArgumentParser parser = default_parser("milestone 09");
     try {
@@ -32,21 +30,18 @@ int main(int argc, char *argv[]) {
 
     fs::path filepath = argv[0];
     auto pwd = filepath.parent_path();
+    MPIWriter writer(pwd, parser);
+
     auto input_path = parser.get<std::string>("--input");
     auto [names, positions]{read_xyz(input_path)};
 
-    std::cout << worker << "loaded file from: " << input_path << std::endl;
-
-    Writer* writer = NULL;
-    if (MPI::comm_rank(MPI_COMM_WORLD) == 0) {
-        writer = new Writer(pwd, parser);
-    }
+    writer.log("loaded file from: ", input_path);
 
     size_t output_interval = parser.get<size_t>("--output_interval");
 
     // initialize simulation
     Atoms atoms(names, positions);
-    std::cout << worker << " initialized atoms" << std::endl;
+    writer.debug("initialized atoms");
 
     atoms.set_mass(parser.get<double>("--mass") * 103.6);
     double timestep = parser.get<double>("--timestep");
@@ -54,7 +49,7 @@ int main(int argc, char *argv[]) {
 
     double cutoff = parser.get<double>("--cutoff");
     NeighborList neighbor_list(cutoff);
-    std::cout << worker << " initialized neighbors" << std::endl;
+    writer.debug("initialized neighbors");
 
     double target_temperaure = parser.get<double>("--temperature") * 1e-5;
     double relaxation_time = parser.get<size_t>("--relaxation_time") * timestep;
@@ -66,18 +61,18 @@ int main(int argc, char *argv[]) {
 
     // domain setup
     auto domain = init_domain(atoms, parser);
-    std::cout << worker << " initialized domain" << std::endl;
-    std::cout << worker << " natoms: " << atoms.nb_atoms() << std::endl;
+    writer.debug("initialized domain");
+    writer.debug("Total number of atoms: ", atoms.nb_atoms());
     domain.enable(atoms);
-    std::cout << worker << " enabled domain" << std::endl;
-    std::cout << worker << " natoms: " << atoms.nb_atoms() << std::endl;
+    writer.debug_all("Number of atoms: ", atoms.nb_atoms());
+    writer.debug("enabled domain");
 
     // stretching
     size_t stretch_interval = parser.get<size_t>("--stretch_interval");
     double length_increase = parser.get<double>("--stretch");
 
     // relax
-    std::cout << "Equilibriating the system..." << std::endl;
+    writer.log("Equilibriating the system...");
     for (size_t i = 0; i < init_timesteps; i++) {
         // writer.write_traj(i, atoms);
         verlet_step1(atoms, timestep);
@@ -96,6 +91,7 @@ int main(int argc, char *argv[]) {
     ExponentialAverage avg_stress(alpha);
     CumulativeAverage avg_temp(output_interval);
     double strain = 0;
+    writer.log("Starting actual simulation");
     for (size_t ts = 0; ts < max_timesteps; ts++) {
         verlet_step1(atoms, timestep);
         domain.exchange_atoms(atoms);
@@ -134,14 +130,11 @@ int main(int argc, char *argv[]) {
 
         if (ts % output_interval == 0) {
             domain.disable(atoms);
-            if (MPI::comm_rank(MPI_COMM_WORLD) == 0) {
-                writer->write_traj(ts, atoms);
-                writer->write_stats(ts, ekin, epot, avg_temp.get(), avg_stress.get(), strain);
-            }
+            writer.write_traj(ts, atoms);
+            writer.write_stats(ts, ekin, epot, avg_temp.get(), avg_stress.get(), strain);
             domain.enable(atoms);
         }
     }
-    delete writer;
 
     return 0;
 }

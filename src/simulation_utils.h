@@ -2,85 +2,7 @@
 #define __SIMULATION_UTILS_H
 
 #include "atoms.h"
-#include "xyz.h"
 #include <argparse/argparse.hpp>
-#include <filesystem>
-
-namespace fs = std::filesystem;
-
-// Handles writing simulation data in various formats such as console, csv and xyz
-class Writer {
-private:
-    std::filesystem::path csv_path;
-    std::filesystem::path traj_path;
-    bool write_to_csv;
-    bool write_to_xyz;
-    bool write_to_console;
-    size_t output_interval;
-    std::ofstream csv;
-    std::ofstream traj;
-
-  public:
-    Writer() = default;
-    Writer(fs::path pwd, argparse::ArgumentParser parser) {
-        write_to_csv = parser.is_used("--csv");
-        write_to_xyz = parser.is_used("--traj");
-        write_to_console = !parser.get<bool>("--silent");
-        output_interval = parser.get<size_t>("--output_interval");
-        if (write_to_csv) {
-            try {
-                auto p = parser.get<std::string>("--csv");
-                csv_path = fs::path(p);
-            } catch (const std::logic_error &e) {
-                csv_path = pwd / "output.csv";
-                std::cout << "No csv path provided, using default path: "
-                          << csv_path << std::endl;
-            }
-
-            csv.open(csv_path);
-            csv << "Timestep,Total Energy,Kinetic Energy,Potential Energy,Temperature,Stress,Strain"
-                << std::endl;
-        }
-        if (write_to_xyz) {
-            try {
-                auto p = parser.get<std::string>("--traj");
-                traj_path = fs::path(p);
-            } catch (const std::logic_error &e) {
-                traj_path = pwd / "traj.xyz";
-                std::cout << "No traj path provided, using default path: "
-                          << csv_path << std::endl;
-            }
-
-            traj.open(traj_path);
-        }
-    }
-    ~Writer() {
-        csv.close();
-        traj.close();
-    }
-    void write_stats(size_t timestep, double ekin, double epot, double temp = 0, double stress = 0, double strain = 0) {
-        if (timestep % output_interval == 0) {
-            if (write_to_console) {
-                std::cout << "Frame: " << (int)(timestep / output_interval) << " ";
-                std::cout << "Total Energy: " << ekin + epot << ", ";
-                std::cout << "Kinetic Energy: " << ekin << ", ";
-                std::cout << "Potential Energy: " << epot << ", ";
-                std::cout << "Temperature: " << temp << ", ";
-                std::cout << "Stress: " << stress << ", ";
-                std::cout << "Strain: " << strain << std::endl;
-            }
-            if (write_to_csv) {
-                csv << timestep << "," << ekin + epot << "," << ekin << "," << epot << "," << temp << "," << stress << "," << strain << std::endl;
-            }
-        }
-    }
-    void write_traj(size_t timestep, Atoms& atoms) {
-        if (timestep % output_interval == 0) {
-            write_xyz(traj, atoms);
-        }
-    }
-    size_t get_output_interval() { return output_interval; }
-};
 
 
 // constructs an ArgumentParser with default arguments used for most simulations
@@ -89,6 +11,10 @@ argparse::ArgumentParser default_parser(const char* name) {
     // IO parameters
     parser.add_argument("-s", "--silent")
         .help("Do not print stats.")
+        .default_value(false)
+        .implicit_value(true);
+    parser.add_argument("-v", "--verbose")
+        .help("Print all sorts of debug info.")
         .default_value(false)
         .implicit_value(true);
     parser.add_argument("--output_interval")

@@ -10,6 +10,7 @@ Domain init_domain(Atoms& atoms, argparse::ArgumentParser parser) {
     auto ds = parser.get<std::vector<int>>("--domains");
     auto periodic = parser.get<std::vector<int>>("--periodic");
     double shift = parser.get<double>("--shift_atoms");
+    bool verbose = parser.get<bool>("--verbose");
 
     auto max_pos = atoms.positions.rowwise().maxCoeff();
     auto min_pos = atoms.positions.rowwise().minCoeff();
@@ -34,7 +35,8 @@ Domain init_domain(Atoms& atoms, argparse::ArgumentParser parser) {
     Domain domain(MPI_COMM_WORLD,
         {box_sz_x, box_sz_y, box_sz_z},
         {ds[0], ds[1], ds[2]},
-        {periodic[0], periodic[1], periodic[2]}
+        {periodic[0], periodic[1], periodic[2]},
+        verbose
     );
     return domain;
 }

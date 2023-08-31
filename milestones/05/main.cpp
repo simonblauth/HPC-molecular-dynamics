@@ -4,6 +4,7 @@
 #include "simulation_utils.h"
 #include "types.h"
 #include "verlet.h"
+#include "writer.h"
 #include <argparse/argparse.hpp>
 #include <filesystem>
 #include <iostream>

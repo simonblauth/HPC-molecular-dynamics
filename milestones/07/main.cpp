@@ -6,6 +6,7 @@
 #include "thermostat.h"
 #include "types.h"
 #include "verlet.h"
+#include "writer.h"
 #include <argparse/argparse.hpp>
 #include <filesystem>
 #include <iostream>
@@ -26,11 +27,12 @@ int main(int argc, char *argv[]) {
 
     fs::path filepath = argv[0];
     auto pwd = filepath.parent_path();
+    Writer writer(pwd, parser);
+
     auto input_path = parser.get<std::string>("--input");
     auto [names, positions]{read_xyz(input_path)};
-    std::cout << "loaded file from: " << input_path << std::endl;
 
-    Writer writer(pwd, parser);
+    writer.log("loaded file from: ", input_path);
 
     // initialize simulation
     Atoms atoms(names, positions);
@@ -55,7 +57,7 @@ int main(int argc, char *argv[]) {
     NeighborList neighbor_list(cutoff);
 
     // relax
-    std::cout << "Equilibriating the system..." << std::endl;
+    writer.log("Equilibriating the system...");
     for (size_t i = 0; i < init_timesteps; i++) {
         // writer.write_traj(i, atoms);
         verlet_step1(atoms, timestep);
@@ -69,7 +71,7 @@ int main(int argc, char *argv[]) {
     bool relaxed = false;
     double alpha = parser.get<double>("--smoothing");
     ExponentialAverage avg_temp(alpha, atoms.current_temperature_kelvin());
-    std::cout << "Starting simulation" << std::endl;
+    writer.log("Starting simulation");
     for (size_t ts = 0; ts < max_timesteps; ts++) {
         writer.write_traj(ts, atoms);
         verlet_step1(atoms, timestep);

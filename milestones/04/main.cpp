@@ -3,6 +3,7 @@
 #include "simulation_utils.h"
 #include "types.h"
 #include "verlet.h"
+#include "writer.h"
 #include "xyz.h"
 #include <argparse/argparse.hpp>
 #include <filesystem>
@@ -11,13 +12,6 @@
 namespace fs = std::filesystem;
 
 int main(int argc, char *argv[]) {
-    fs::path filepath = argv[0];
-    auto pwd = filepath.parent_path();
-    auto input_path = pwd / "lj54.xyz";
-    auto [names, positions, velocities]{read_xyz_with_velocities(input_path)};
-    std::cout << "loaded file from: " << input_path << std::endl;
-    Atoms atoms(positions, velocities);
-
     argparse::ArgumentParser parser = default_parser("milestone 04");
     try {
         parser.parse_args(argc, argv);
@@ -26,7 +20,15 @@ int main(int argc, char *argv[]) {
         std::cerr << parser;
         std::exit(1);
     }
+
+    fs::path filepath = argv[0];
+    auto pwd = filepath.parent_path();
     Writer writer(pwd, parser);
+
+    auto input_path = pwd / "lj54.xyz";
+    auto [names, positions, velocities]{read_xyz_with_velocities(input_path)};
+    writer.log("loaded file from: ", input_path);
+    Atoms atoms(positions, velocities);
 
     // initialize simulation
     atoms.set_mass(parser.get<double>("--mass"));

@@ -30,7 +30,7 @@
 
 Domain::Domain(const MPI_Comm &comm, const Eigen::Array3d &domain_length,
                const Eigen::Array3i &decomposition,
-               const Eigen::Array3i &periodicity)
+               const Eigen::Array3i &periodicity, bool verbose)
     : domain_length_{domain_length}, decomposition_{decomposition},
       periodicity_{periodicity}, nb_local_{0}, is_enabled_{false},
       offset_left_{Eigen::Matrix3d::Zero()}, offset_right_{
@@ -53,8 +53,10 @@ Domain::Domain(const MPI_Comm &comm, const Eigen::Array3d &domain_length,
 
     _update_offsets();
 
-    std::cout << "Rank " << rank_ << " has coordinate "
+    if (verbose) {
+        std::cout << "Rank " << rank_ << " has coordinate "
               << coordinate_.transpose() << "." << std::endl;
+    }
 }
 
 Domain::~Domain() {}

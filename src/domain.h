@@ -33,7 +33,7 @@
 class Domain {
 public:
     Domain(const MPI_Comm &comm, const Eigen::Array3d &domain_length, const Eigen::Array3i &decomposition,
-           const Eigen::Array3i &periodicity);
+           const Eigen::Array3i &periodicity, bool verbose = false);
 
     ~Domain();
 
