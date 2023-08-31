@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 from typing import Optional
 
 
+def zero_shift(df: pd.DataFrame, col):
+    df[col] -= df[col][0]
+
+
 def slope(df: pd.DataFrame, x, y, meltpoint_lower_bound, meltpoint_upper_bound):
     dps = df.drop(df[(df[y] > meltpoint_lower_bound) &
                   (df[y] < meltpoint_upper_bound)].index)
@@ -19,8 +23,10 @@ def heat_capacity(df: pd.DataFrame, meltpoint_lower_bound, meltpoint_upper_bound
 def latent_heat(df: pd.DataFrame, meltpoint_lower_bound, meltpoint_upper_bound):
     m = slope(df, "Total Energy", "Temperature",
               meltpoint_lower_bound, meltpoint_upper_bound)
-    x = df["Total Energy"].tail(1).item() - df["Total Energy"][0]
-    y = df["Temperature"].tail(1).item() - df["Temperature"][0]
+    zero_shift(df, "Total Energy")
+    zero_shift(df, "Temperature")
+    x = df["Total Energy"].tail(1).item()
+    y = df["Temperature"].tail(1).item()
     y_0 = y - m * x
     return -y_0 / m
 
@@ -31,12 +37,13 @@ def isunder(x, y, m, y_0):
 
 
 def melting_point(df: pd.DataFrame, meltpoint_lower_bound, meltpoint_upper_bound):
-    # TODO: fix this (no brainpower left)
     m = slope(df, "Total Energy", "Temperature",
               meltpoint_lower_bound, meltpoint_upper_bound)
     lh = latent_heat(df, meltpoint_lower_bound, meltpoint_upper_bound)
     start = lh / 2
     y_0 = -m * lh
+    zero_shift(df, "Total Energy")
+    zero_shift(df, "Temperature")
     for x, y in zip(df["Total Energy"], df["Temperature"]):
         if isunder(x, y, m, y_0):
             return y
@@ -48,7 +55,7 @@ def plot_heat_capacity(filepaths: list[str], labels: list[str]):
     heat_capacities = [heat_capacity(pd.read_csv(filepath), 800, 1000) for filepath in filepaths]
     plt.plot(cluster_sizes, heat_capacities)
     plt.xlabel("Number of Atoms")
-    plt.ylabel("Heat Capacity")
+    plt.ylabel("Heat Capacity [eV/K]")
     plt.show()
 
 
@@ -57,7 +64,7 @@ def plot_latent_heat(filepaths: list[str], labels: list[str]):
     latent_heats = [latent_heat(pd.read_csv(filepath), 800, 1000) for filepath in filepaths]
     plt.plot(cluster_sizes, latent_heats)
     plt.xlabel("Number of Atoms")
-    plt.ylabel("Latent Heat")
+    plt.ylabel("Latent Heat [K]")
     plt.show()
 
 
@@ -66,7 +73,7 @@ def plot_melting_point(filepaths: list[str], labels: list[str]):
     melting_points = [melting_point(pd.read_csv(filepath), 800, 1000) for filepath in filepaths]
     plt.plot(cluster_sizes, melting_points)
     plt.xlabel("Number of Atoms")
-    plt.ylabel("Melting Point")
+    plt.ylabel("Melting Point [K]")
     plt.show()
 
 
