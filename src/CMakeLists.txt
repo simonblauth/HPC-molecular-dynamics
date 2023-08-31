@@ -25,7 +25,7 @@ set(MY_MD_CPP
 )
 
 if (MPI_FOUND)
-  set(MY_MD_HEADERS ${MY_MD_HEADERS} domain.h mpi_support.h)
+  set(MY_MD_HEADERS ${MY_MD_HEADERS} domain.h mpi_support.h simulation_utils_mpi.h)
   set(MY_MD_CPP ${MY_MD_CPP} domain.cpp)
 endif()
 

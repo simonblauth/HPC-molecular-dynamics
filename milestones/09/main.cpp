@@ -5,6 +5,7 @@
 #include "mpi_support.h"
 #include "neighbors.h"
 #include "simulation_utils.h"
+#include "simulation_utils_mpi.h"
 #include "thermostat.h"
 #include "types.h"
 #include "verlet.h"
@@ -13,52 +14,6 @@
 #include <iostream>
 
 namespace fs = std::filesystem;
-
-
-Domain init_domain(Atoms& atoms, argparse::ArgumentParser parser) {
-    auto ds = parser.get<std::vector<int>>("--domains");
-    auto periodic = parser.get<std::vector<int>>("--periodic");
-    double shift = parser.get<double>("--shift_atoms");
-
-    auto max_pos = atoms.positions.rowwise().maxCoeff();
-    auto min_pos = atoms.positions.rowwise().minCoeff();
-    // bounding box
-    Eigen::Array3d bbox{max_pos(0) - min_pos(0),
-                        max_pos(1) - min_pos(1),
-                        max_pos(2) - min_pos(2)};
-    double offset_x = bbox(0) * shift - min_pos(0);
-    double offset_y = bbox(1) * shift - min_pos(1);
-    double offset_z = bbox(2) * shift - min_pos(2);
-    Eigen::Array3d offset{offset_x, offset_y, offset_z};
-    for (size_t i = 0; i < 3; i++) {
-        if (periodic[i] == 0) {
-            atoms.positions.row(i) += offset(i);
-        }
-    }
-
-    double box_sz_x = periodic[0] == 0 ? bbox(0) + 2 * bbox(0) * shift : max_pos(0) + min_pos(0);
-    double box_sz_y = periodic[1] == 0 ? bbox(1) + 2 * bbox(1) * shift : max_pos(1) + min_pos(1);
-    double box_sz_z = periodic[2] == 0 ? bbox(2) + 2 * bbox(2) * shift : max_pos(2) + min_pos(2);
-
-    Domain domain(MPI_COMM_WORLD,
-        {box_sz_x, box_sz_y, box_sz_z},
-        {ds[0], ds[1], ds[2]},
-        {periodic[0], periodic[1], periodic[2]}
-    );
-    return domain;
-}
-
-double compute_stress(const Domain& domain, const Atoms& atoms, int dim = 2) {
-    double left_domain_boundary{domain.coordinate(dim) * domain.domain_length(dim) / domain.decomposition(dim)};
-    auto left_mask{atoms.positions.row(dim) < left_domain_boundary};
-    double stress = 0;
-    for (::Eigen::Index i{0}; i < left_mask.size(); ++i) {
-        if (left_mask[i]) {
-            stress += atoms.forces(dim, i);
-        }
-    }
-    return stress;
-}
 
 int main(int argc, char *argv[]) {
     MPI::init_guard guard(&argc, &argv);

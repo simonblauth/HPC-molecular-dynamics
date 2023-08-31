@@ -1,9 +1,12 @@
 #include "atoms.h"
+#include "average.h"
 #include "domain.h"
 #include "ducastelle.h"
 #include "mpi_support.h"
 #include "neighbors.h"
 #include "simulation_utils.h"
+#include "simulation_utils_mpi.h"
+#include "thermostat.h"
 #include "types.h"
 #include "verlet.h"
 #include <argparse/argparse.hpp>
@@ -53,27 +56,44 @@ int main(int argc, char *argv[]) {
     NeighborList neighbor_list(cutoff);
     std::cout << worker << " initialized neighbors" << std::endl;
 
+    size_t init_timesteps = parser.get<size_t>("--initial_relaxation");
+    double delta_Q = parser.get<double>("--deposit_energy");
+    size_t relaxation_time_deposit = parser.get<size_t>("--relaxation_time_deposit");
+    size_t relaxation_time = parser.get<size_t>("--relaxation_time");
+    double target_temperaure = parser.get<double>("--temperature") * 1e-5;
+    double relaxation_increase = parser.get<double>("--relaxation_time_increase");
+    Equilibrium equilibrium(relaxation_increase, relaxation_time,
+                            target_temperaure, timestep, init_timesteps);
+    EnergyPump pump(relaxation_time_deposit, delta_Q);
+
     // domain setup
-    auto max_pos = atoms.positions.rowwise().maxCoeff();
-    auto min_pos = atoms.positions.rowwise().minCoeff();
-    auto box_size_pre = max_pos - min_pos;
-    auto offset = box_size_pre * parser.get<double>("--shift_atoms");
-    auto box_size = box_size_pre + 2 * offset;
-    atoms.positions.colwise() += offset;
-    std::cout << worker << " computed box size: \n" << box_size << std::endl;
-    
-
-    auto ds = parser.get<std::vector<int>>("--domains");
-    Domain domain(MPI_COMM_WORLD,
-        {box_size(0), box_size(1), box_size(2)},
-        {ds[0], ds[1], ds[2]},
-        {0, 0, 0}
-    );
+    auto domain = init_domain(atoms, parser);
     std::cout << worker << " initialized domain" << std::endl;
-
-    // simulate
     domain.enable(atoms);
     std::cout << worker << " enabled domain" << std::endl;
+
+
+    // relax
+    std::cout << "Equilibriating the system..." << std::endl;
+    for (size_t i = 0; i < init_timesteps; i++) {
+        // writer.write_traj(i, atoms);
+        verlet_step1(atoms, timestep);
+        domain.exchange_atoms(atoms);
+        domain.update_ghosts(atoms, 2 * cutoff);
+        neighbor_list.update(atoms);
+        double epot = ducastelle(atoms, neighbor_list, cutoff);
+        verlet_step2(atoms, timestep);
+        double temp_local = atoms.current_temperature_kelvin(domain.nb_local());
+        double temp = MPI::allreduce(temp_local, MPI_SUM, MPI_COMM_WORLD) / domain.size();
+        equilibrium.step(atoms, i, temp);
+    }
+
+    // simulate
+    double current_temp_local = atoms.current_temperature_kelvin(domain.nb_local());
+    double current_temp = MPI::allreduce(current_temp_local, MPI_SUM, MPI_COMM_WORLD) / domain.size();
+    double alpha = parser.get<double>("--smoothing");
+    ExponentialAverage avg_temp(alpha, current_temp);
+    std::cout << "Starting actual simulation" << std::endl;
     for (size_t ts = 0; ts < max_timesteps; ts++) {
         verlet_step1(atoms, timestep);
         domain.exchange_atoms(atoms);
@@ -82,16 +102,23 @@ int main(int argc, char *argv[]) {
         double epot_local = ducastelle(atoms, neighbor_list, domain.nb_local(), cutoff);
         verlet_step2(atoms, timestep);
 
-        double ekin_local = atoms.kinetic_energy();
+        double ekin_local = atoms.kinetic_energy(domain.nb_local());
+        double temp_local = atoms.current_temperature_kelvin(domain.nb_local());
+        double temp = MPI::allreduce(temp_local, MPI_SUM, MPI_COMM_WORLD) / domain.size();
 
         double ekin = MPI::allreduce(ekin_local, MPI_SUM, MPI_COMM_WORLD);
         double epot = MPI::allreduce(epot_local, MPI_SUM, MPI_COMM_WORLD);
+
+        if (pump.relaxed()) {
+            avg_temp.update(temp);
+        }
+        pump.step(atoms, ts, ekin);
 
         if (ts % output_interval == 0) {
             domain.disable(atoms);
             if (MPI::comm_rank(MPI_COMM_WORLD) == 0) {
                 writer->write_traj(ts, atoms);
-                writer->write_stats(ts, ekin, epot, 0);
+                writer->write_stats(ts, ekin, epot, avg_temp.get());
             }
             domain.enable(atoms);
         }

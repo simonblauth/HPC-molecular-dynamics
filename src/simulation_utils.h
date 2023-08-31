@@ -1,3 +1,6 @@
+#ifndef __SIMULATION_UTILS_H
+#define __SIMULATION_UTILS_H
+
 #include "atoms.h"
 #include "xyz.h"
 #include <argparse/argparse.hpp>
@@ -226,3 +229,5 @@ Atoms init_cubic_lattice(size_t nb_atoms_per_lattice, double lattice_distance) {
     }
     return atoms;
 }
+
+#endif // __SIMULATION_UTILS_H
