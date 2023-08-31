@@ -18,15 +18,7 @@ namespace fs = std::filesystem;
 
 int main(int argc, char *argv[]) {
     MPI::init_guard guard(&argc, &argv);
-    // argument parsing
-    argparse::ArgumentParser parser = default_parser("milestone 09");
-    try {
-        parser.parse_args(argc, argv);
-    } catch (const std::runtime_error &err) {
-        std::cerr << err.what() << std::endl;
-        std::cerr << parser;
-        std::exit(1);
-    }
+    argparse::ArgumentParser parser = default_parser("milestone 09", argc, argv);
 
     fs::path filepath = argv[0];
     auto pwd = filepath.parent_path();

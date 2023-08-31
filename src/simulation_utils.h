@@ -3,7 +3,7 @@
 
 #include "atoms.h"
 #include <argparse/argparse.hpp>
-
+#include <iostream>
 
 // constructs an ArgumentParser with default arguments used for most simulations
 argparse::ArgumentParser default_parser(const char* name) {
@@ -136,6 +136,19 @@ argparse::ArgumentParser default_parser(const char* name) {
         .default_value<size_t>(100)
         .scan<'u', size_t>();
 
+    return parser;
+}
+
+// constructs and initializes an ArgumentParser with default arguments used for most simulations
+argparse::ArgumentParser default_parser(const char* name, int argc, const char *const *argv) {
+    argparse::ArgumentParser parser = default_parser(name);
+    try {
+        parser.parse_args(argc, argv);
+    } catch (const std::runtime_error &err) {
+        std::cerr << err.what() << std::endl;
+        std::cerr << parser;
+        std::exit(1);
+    }
     return parser;
 }
 
