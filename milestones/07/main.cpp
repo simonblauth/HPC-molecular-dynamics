@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     size_t init_timesteps = parser.get<size_t>("--initial_relaxation");
     size_t relaxation_time = parser.get<size_t>("--relaxation_time");
     double target_temperaure = parser.get<double>("--temperature") * 1e-5;
-    double relaxation_increase = parser.get<double>("--relaxation_time_increase");
+    double relaxation_increase = parser.get<double>("--relaxation_time_factor");
     ThermostatScheduler scheduler(relaxation_increase, relaxation_time);
     Equilibrium equilibrium(relaxation_increase, relaxation_time,
                             target_temperaure, timestep, init_timesteps);
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
         neighbor_list.update(atoms);
         double epot = ducastelle(atoms, neighbor_list, cutoff);
         verlet_step2(atoms, timestep);
-        equilibrium.step(atoms, i, atoms.current_temperature_kelvin());
+        equilibrium.step(atoms, i, atoms.current_temperature());
     }
 
     // simulate

@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
     size_t relaxation_time_deposit = parser.get<size_t>("--relaxation_time_deposit");
     size_t relaxation_time = parser.get<size_t>("--relaxation_time");
     double target_temperaure = parser.get<double>("--temperature") * 1e-5;
-    double relaxation_increase = parser.get<double>("--relaxation_time_increase");
+    double relaxation_increase = parser.get<double>("--relaxation_time_factor");
     Equilibrium equilibrium(relaxation_increase, relaxation_time,
                             target_temperaure, timestep, init_timesteps);
     EnergyPump pump(relaxation_time_deposit, delta_Q);
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
         neighbor_list.update(atoms);
         double epot = ducastelle(atoms, neighbor_list, cutoff);
         verlet_step2(atoms, timestep);
-        double temp_local = atoms.current_temperature_kelvin(domain.nb_local());
+        double temp_local = atoms.current_temperature(domain.nb_local());
         double temp = MPI::allreduce(temp_local, MPI_SUM, MPI_COMM_WORLD) / domain.size();
         equilibrium.step(atoms, i, temp);
     }

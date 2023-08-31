@@ -58,23 +58,44 @@ int main(int argc, char *argv[]) {
 
     double target_temperaure = parser.get<double>("--temperature") * 1e-5;
     double relaxation_time = parser.get<size_t>("--relaxation_time") * timestep;
+    double relaxation_increase = parser.get<double>("--relaxation_time_factor");
 
+    size_t init_timesteps = parser.get<size_t>("--initial_relaxation");
+    Equilibrium equilibrium(relaxation_increase, relaxation_time,
+                            target_temperaure, timestep, init_timesteps);
 
     // domain setup
     auto domain = init_domain(atoms, parser);
     std::cout << worker << " initialized domain" << std::endl;
+    std::cout << worker << " natoms: " << atoms.nb_atoms() << std::endl;
+    domain.enable(atoms);
+    std::cout << worker << " enabled domain" << std::endl;
+    std::cout << worker << " natoms: " << atoms.nb_atoms() << std::endl;
 
     // stretching
     size_t stretch_interval = parser.get<size_t>("--stretch_interval");
     double length_increase = parser.get<double>("--stretch");
 
+    // relax
+    std::cout << "Equilibriating the system..." << std::endl;
+    for (size_t i = 0; i < init_timesteps; i++) {
+        // writer.write_traj(i, atoms);
+        verlet_step1(atoms, timestep);
+        domain.exchange_atoms(atoms);
+        domain.update_ghosts(atoms, 2 * cutoff);
+        neighbor_list.update(atoms);
+        double epot = ducastelle(atoms, neighbor_list, cutoff);
+        verlet_step2(atoms, timestep);
+        double temp_local = atoms.current_temperature(domain.nb_local());
+        double temp = MPI::allreduce(temp_local, MPI_SUM, MPI_COMM_WORLD) / domain.size();
+        equilibrium.step(atoms, i, temp);
+    }
+
     // simulate
-    std::cout << worker << " natoms: " << atoms.nb_atoms() << std::endl;
-    domain.enable(atoms);
-    std::cout << worker << " natoms: " << atoms.nb_atoms() << std::endl;
-    std::cout << worker << " enabled domain" << std::endl;
-    CumulativeAverage avg_stress(output_interval);
+    double alpha = parser.get<double>("--smoothing");
+    ExponentialAverage avg_stress(alpha);
     CumulativeAverage avg_temp(output_interval);
+    double strain = 0;
     for (size_t ts = 0; ts < max_timesteps; ts++) {
         verlet_step1(atoms, timestep);
         domain.exchange_atoms(atoms);
@@ -83,16 +104,17 @@ int main(int argc, char *argv[]) {
         double epot_local = ducastelle(atoms, neighbor_list, domain.nb_local(), cutoff);
         double stress_local = compute_stress(domain, atoms);
         verlet_step2(atoms, timestep);
-        double temp_scaled_local = atoms.current_temperature(domain.nb_local());
-        double temp_scaled = MPI::allreduce(temp_scaled_local, MPI_SUM, MPI_COMM_WORLD) / domain.size();
-        berendsen_thermostat(atoms, target_temperaure, timestep,
-                             relaxation_time, temp_scaled);
+        // double temp_scaled_local = atoms.current_temperature(domain.nb_local());
+        // double temp_scaled = MPI::allreduce(temp_scaled_local, MPI_SUM, MPI_COMM_WORLD) / domain.size();
+        // berendsen_thermostat(atoms, target_temperaure, timestep,
+        //                      relaxation_time, temp_scaled);
 
         if (ts % stretch_interval == 0) {
             Eigen::Array3d new_length{
                 domain.domain_length(0), domain.domain_length(1),
                 domain.domain_length(2) + length_increase};
             domain.scale(atoms, new_length);
+            strain += length_increase;
         }
 
         double ekin_local = atoms.kinetic_energy(domain.nb_local());
@@ -108,17 +130,15 @@ int main(int argc, char *argv[]) {
         // cumulative average over stress
         double stress = MPI::allreduce(stress_local, MPI_SUM, MPI_COMM_WORLD);
         stress /= (domain.domain_length(0) * domain.domain_length(1) * domain.decomposition(2));
-        avg_stress.update(stress, ts);
+        avg_stress.update(stress);
 
         if (ts % output_interval == 0) {
             domain.disable(atoms);
             if (MPI::comm_rank(MPI_COMM_WORLD) == 0) {
                 writer->write_traj(ts, atoms);
-                writer->write_stats(ts, ekin, epot, avg_temp.get(), avg_stress.get());
+                writer->write_stats(ts, ekin, epot, avg_temp.get(), avg_stress.get(), strain);
             }
             domain.enable(atoms);
-            avg_stress = 0;
-            avg_temp = 0;
         }
     }
     delete writer;

@@ -38,7 +38,7 @@ private:
             }
 
             csv.open(csv_path);
-            csv << "Timestep,Total Energy,Kinetic Energy,Potential Energy,Temperature,Stress"
+            csv << "Timestep,Total Energy,Kinetic Energy,Potential Energy,Temperature,Stress,Strain"
                 << std::endl;
         }
         if (write_to_xyz) {
@@ -58,7 +58,7 @@ private:
         csv.close();
         traj.close();
     }
-    void write_stats(size_t timestep, double ekin, double epot, double temp = 0, double stress = 0) {
+    void write_stats(size_t timestep, double ekin, double epot, double temp = 0, double stress = 0, double strain = 0) {
         if (timestep % output_interval == 0) {
             if (write_to_console) {
                 std::cout << "Frame: " << (int)(timestep / output_interval) << " ";
@@ -66,10 +66,11 @@ private:
                 std::cout << "Kinetic Energy: " << ekin << ", ";
                 std::cout << "Potential Energy: " << epot << ", ";
                 std::cout << "Temperature: " << temp << ", ";
-                std::cout << "Stress: " << stress << std::endl;
+                std::cout << "Stress: " << stress << ", ";
+                std::cout << "Strain: " << strain << std::endl;
             }
             if (write_to_csv) {
-                csv << timestep << "," << ekin + epot << "," << ekin << "," << epot << "," << temp << "," << stress << std::endl;
+                csv << timestep << "," << ekin + epot << "," << ekin << "," << epot << "," << temp << "," << stress << "," << strain << std::endl;
             }
         }
     }
@@ -157,8 +158,8 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<size_t>(1000)
         .scan<'u', size_t>();
-    parser.add_argument("--relaxation_time_increase")
-        .help("Factor to increase the relaxation time.")
+    parser.add_argument("--relaxation_time_factor")
+        .help("Fraction of the initial relaxation time to run the thermosthat for.")
         .nargs(1)
         .default_value<double>(2.0)
         .scan<'g', double>();
