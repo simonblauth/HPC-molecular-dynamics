@@ -84,7 +84,7 @@ def temperature_over_energy(simulator: str, input_files: list[str]):
         filepaths.append(outpath)
         os.makedirs(osp.dirname(outpath), exist_ok=True)
         # TODO: fix deposit energies
-        os.system(f"{simulator} -i {infile} --cutoff 7 --max_timesteps 50000 --output_interval 100 --timestep 1 --mass 197 --relaxation_time 100 --deposit_energy 0.5 --relaxation_time_deposit 20 --csv {outpath} --initial_relaxation 15000 --temperature 100 --smoothing 0.008 --relaxation_time_factor 10.0")
+        os.system(f"{simulator} -i {infile} --cutoff 7 --max_timesteps 50000 --output_interval 100 --timestep 1 --mass 197 --relaxation_time 100 --deposit_energy 0.5 --relaxation_time_deposit 20 --csv {outpath} --initial_relaxation 15000 --temperature 100 --smoothing 0.008 --thermostat_factor 10.0")
     make_plot(filepaths, labels, "Total Energy", "Temperature", ylabel="Temperature [K]", xlabel="Total Energy [eV]", zero_x=True)
 
 
@@ -106,7 +106,7 @@ def stress_strain(input_files: list[str], target_strains: list[int]):
                 filepaths.append(outpath_csv)
                 os.makedirs(osp.dirname(outpath_csv), exist_ok=True)
                 timesteps = int(strain_interval * target_strain / ss)
-                command = f"mpirun -n 6 ./build/milestones/09/09 -i {infile} --mass 197 --timestep 1 --max_timesteps {timesteps} --output_interval 100 --cutoff 7.0 --domains 1 1 6 --periodic 0 0 1 --shift_atoms 0.1 --smoothing 0.01 --stretch {ss} --stretch_interval {strain_interval} --temperature {t} --relaxation_time 100 --initial_relaxation 10000 --relaxation_time_factor 10.0 --csv {outpath_csv} --traj {outpath_xyz}"
+                command = f"mpirun -n 6 ./build/milestones/09/09 -i {infile} --mass 197 --timestep 1 --max_timesteps {timesteps} --output_interval 100 --cutoff 7.0 --domains 1 1 6 --periodic 0 0 1 --shift_atoms 0.1 --smoothing 0.01 --stretch {ss} --stretch_interval {strain_interval} --temperature {t} --relaxation_time 100 --initial_relaxation 10000 --thermostat_factor 10.0 --csv {outpath_csv} --traj {outpath_xyz}"
                 os.system(command)
         make_plot(filepaths, labels, "Strain", "Stress", "Strain [Å]", "Stress [eV/Å^3]")
 

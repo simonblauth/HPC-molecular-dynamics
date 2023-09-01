@@ -27,7 +27,7 @@ class SimulationParameters {
         cutoff_ = parser.get<double>("--cutoff");
         target_temperature_ = parser.get<double>("--temperature") * 1e-5;
         relaxation_time_ = parser.get<size_t>("--relaxation_time") * timestep_;
-        relaxation_factor_ = parser.get<double>("--relaxation_time_factor");
+        relaxation_factor_ = parser.get<double>("--thermostat_factor");
         init_timesteps_ = parser.get<size_t>("--initial_relaxation");
         stretch_interval_ = parser.get<size_t>("--stretch_interval");
         length_increase_ = parser.get<double>("--stretch");
@@ -128,7 +128,7 @@ argparse::ArgumentParser default_parser(const char* name) {
         .nargs(1)
         .default_value<size_t>(1000)
         .scan<'u', size_t>();
-    parser.add_argument("--relaxation_time_factor")
+    parser.add_argument("--thermostat_factor")
         .help("Fraction of the initial relaxation time to run the thermosthat for.")
         .nargs(1)
         .default_value<double>(2.0)

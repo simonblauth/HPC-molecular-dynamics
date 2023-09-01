@@ -31,18 +31,19 @@ int main(int argc, char *argv[]) {
     double timestep = parser.get<double>("--timestep") * std::sqrt(atoms.get_mass() * sigma * sigma / epsilon);
     SimulationParameters sim(parser);
 
+    Equilibrium equilibrium(sim.relaxation_factor(), sim.relaxation_time(),
+                            sim.target_temperature(), sim.timestep(), sim.max_timesteps());
+
     // simulate
     for (size_t ts = 0; ts < sim.max_timesteps(); ts++) {
         writer.write_traj(ts, atoms);
         verlet_step1(atoms, timestep);
         double epot = lj_direct_summation(atoms, epsilon, sigma);
         verlet_step2(atoms, timestep);
-        berendsen_thermostat(atoms, sim.target_temperature(), timestep, sim.relaxation_time());
         double ekin = atoms.kinetic_energy();
-        double temp = atoms.current_temperature_kelvin();
-        writer.write_stats(ts, ekin, epot, temp);
+        equilibrium.step(atoms, ts, atoms.current_temperature());
+        writer.write_stats(ts, ekin, epot, atoms.current_temperature_kelvin());
     }
-    // TODO: equilibrium strategy with changing relaxation time
 
     return 0;
 }
