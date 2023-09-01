@@ -35,8 +35,7 @@ def total_energy_domains(args):
     domain_decompositions = [(1, 1, 1), (1, 1, 2), (1, 2, 2), (2, 2, 2)]
     ndomains = [math.prod(dd) for dd in domain_decompositions]
     labels = [f"processes={nd}, decomposition={dd}" for nd, dd in zip(ndomains, domain_decompositions)]
-    # TODO: check input file path
-    input_file = osp.join("milestones", "07", "cluster_923.xyz")
+    input_file = osp.join("milestones", "07", "clusters", "cluster_923.xyz")
     filepaths = []
     for nd, dd in zip(ndomains, domain_decompositions):
         filename = f"domains-{nd}.csv"

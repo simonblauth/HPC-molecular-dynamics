@@ -214,9 +214,4 @@ Atoms init_cubic_lattice(size_t nb_atoms_per_lattice, double lattice_distance) {
     return atoms;
 }
 
-// TODO: stats_collector function
-// TODO: move implementations to .cpp
-// TODO: check default values of parser
-// TODO: init atoms function
-
 #endif // __SIMULATION_UTILS_H
