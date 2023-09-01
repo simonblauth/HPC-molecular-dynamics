@@ -6,6 +6,27 @@
 #include <argparse/argparse.hpp>
 #include <Eigen/Dense>
 
+class Stretcher {
+  private:
+    size_t interval_;
+    double increase_;
+    double strain_ = 0;
+
+  public:
+    Stretcher(size_t stretch_interval, double length_increase) : interval_(stretch_interval), increase_(length_increase) {}
+    ~Stretcher() {}
+    void step(Atoms& atoms, Domain& domain, size_t timestep) {
+        if (timestep % interval_ == 0) {
+            Eigen::Array3d new_length{
+                domain.domain_length(0), domain.domain_length(1),
+                domain.domain_length(2) + increase_};
+            domain.scale(atoms, new_length);
+            strain_ += increase_;
+        }
+    }
+    double strain() { return strain_; }
+};
+
 Domain init_domain(Atoms& atoms, argparse::ArgumentParser parser) {
     auto ds = parser.get<std::vector<int>>("--domains");
     auto periodic = parser.get<std::vector<int>>("--periodic");

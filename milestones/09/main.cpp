@@ -36,9 +36,10 @@ int main(int argc, char *argv[]) {
     SimulationParameters sim(parser);
     NeighborList neighbor_list(sim.cutoff());
     writer.debug("initialized neighbors");
-
+    Stretcher stretcher(sim.stretch_interval(), sim.length_increase());
     Equilibrium equilibrium(sim.relaxation_factor(), sim.relaxation_time(),
-                            sim.target_temperature(), sim.timestep(), sim.init_timesteps());
+                            sim.target_temperature(), sim.timestep(),
+                            sim.init_timesteps());
 
     // domain setup
     auto domain = init_domain(atoms, parser);
@@ -67,7 +68,6 @@ int main(int argc, char *argv[]) {
     double alpha = parser.get<double>("--smoothing");
     ExponentialAverage avg_stress(alpha);
     CumulativeAverage avg_temp(writer.get_output_interval());
-    double strain = 0;
     writer.log("Starting actual simulation");
     for (size_t ts = 0; ts < sim.max_timesteps(); ts++) {
         verlet_step1(atoms, sim.timestep());
@@ -77,18 +77,8 @@ int main(int argc, char *argv[]) {
         double epot_local = ducastelle(atoms, neighbor_list, domain.nb_local(), sim.cutoff());
         double stress_local = compute_stress(domain, atoms);
         verlet_step2(atoms, sim.timestep());
-        // double temp_scaled_local = atoms.current_temperature(domain.nb_local());
-        // double temp_scaled = MPI::allreduce(temp_scaled_local, MPI_SUM, MPI_COMM_WORLD) / domain.size();
-        // berendsen_thermostat(atoms, target_temperaure, timestep,
-        //                      relaxation_time, temp_scaled);
 
-        if (ts % sim.stretch_interval() == 0) {
-            Eigen::Array3d new_length{
-                domain.domain_length(0), domain.domain_length(1),
-                domain.domain_length(2) + sim.length_increase()};
-            domain.scale(atoms, new_length);
-            strain += sim.length_increase();
-        }
+        stretcher.step(atoms, domain, ts);
 
         double ekin_local = atoms.kinetic_energy(domain.nb_local());
         double temp_local = atoms.current_temperature_kelvin(domain.nb_local());
@@ -108,7 +98,7 @@ int main(int argc, char *argv[]) {
         if (ts % writer.get_output_interval() == 0) {
             domain.disable(atoms);
             writer.write_traj(ts, atoms);
-            writer.write_stats(ts, ekin, epot, avg_temp.get(), avg_stress.get(), strain);
+            writer.write_stats(ts, ekin, epot, avg_temp.get(), avg_stress.get(), stretcher.strain());
             domain.enable(atoms);
         }
     }
