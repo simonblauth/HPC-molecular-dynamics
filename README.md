@@ -42,10 +42,12 @@ In the provided commands, if you find expressions in `<braces>` that expression 
 ```bash
 python plotting/simulate_and_plot.py --mode total_energy --simulators ./build/milestones/04/04
 ```
+
 ### Figure 2
 ```bash
 python plotting/simulate_and_plot.py --mode simulation_time --simulators ./build/milestones/05/05 ./build/milestones/06/06 --labels lj_naive lj_cutoff
 ```
+
 ### Figure 3
 ```bash
 python plotting/simulate_and_plot.py --mode total_energy_domains --simulators ./build/milestones/08/08
@@ -54,12 +56,14 @@ Note that this takes a while since each simulation runs for 10000 timesteps. To 
 ```bash
 python plotting/simulate_and_plot.py --mode total_energy_domains --simulators ./build/milestones/08/08 --timesteps 1000
 ```
+
 ### Figure 4
 To generate the trajectory file run the following. Make sure to specify the output files. You can then inspect the `.xyz` file in OVITO ath the timesteps mentioned in the report. The trajectory is only written every 100 timesteps, so to look at the 5000th timestep you have to look at frame 50.
 ```bash
 ./build/milestones/05/05 --lattice_size 5 --max_timesteps 20000 --timestep 1e-3 --traj <output_file.xyz> --csv <output_file.csv> --thermostat_factor 1 --relaxation_time 10 --temperature 500 --silent
 ```
-To verify that the system remains stable without thermostat you can increase the `--thermostat_factor` to disable the thermostat after some time. If you remove the `--silent` argument you can then see the temperature development in the console. 
+To verify that the system remains stable without thermostat you can increase the `--thermostat_factor` to disable the thermostat after some time. If you remove the `--silent` argument you can then see the temperature development in the console.
+
 ### Figure 5
 To plot the data from the provided csv files:
 ```bash
@@ -91,3 +95,36 @@ To plot the data from the provided csv files:
 python plotting/plot_csv.py --csv_files milestones/07/outputs/cluster_923.csv milestones/07/outputs/cluster_1415.csv milestones/07/outputs/cluster_2057.csv  milestones/07/outputs/cluster_2869.csv milestones/07/outputs/cluster_3871.csv --mode melting_point
 ```
 If you want to simulate the data yourself follow the instructions from Figure 5 and adjust the `--csv_files` argument according to where your output data is.
+
+## Figure 9
+To plot the data from the provided csv files:
+```bash
+python plotting/plot_csv.py --csv_files milestones/09/outputs/whisker_small_t0_li01.csv  milestones/09/outputs/whisker_medium_t0_li01.csv milestones/09/outputs/whisker_large_t0_li01.csv --xdata "Strain" --ydata "Stress" --xlabel "Strain [Å]" --ylabel "Stress [eV/Å^3]" --labels whisker_small whisker_medium whisker_large
+```
+To simulate the data yourself:
+```bash
+python plotting/simulate_and_plot.py --mode stress_strain --input_files ./milestones/09/whisker_small.xyz ./milestones/09/whisker_medium.xyz ./milestones/09/whisker_large.xyz --target_strains 25 25 40 --sim_only --output_dir <output_dir>
+```
+
+
+## Figure 10
+To simulate the wire:
+```bash
+mpirun -n 6 ./build/milestones/09/09 -i ./milestones/09/whisker_large.xyz --traj <output_file.xyz> --csv <output_file.csv> --mass 197 --timestep 1 --max_timesteps 40000 --output_interval 100 --cutoff 7.0 --domains 1 1 6 --periodic 0 0 1 --shift_atoms 0.1 --smoothing 0.01 --stretch 0.1 --stretch_interval 100 --temperature 100 --relaxation_time 100 --initial_relaxation 10000 --thermostat_factor 10.0
+```
+Afterwards look at the `.xyz` file in OVITO and turn on common-neighbor-analysis.
+
+## Figure 11
+To plot the data from the provided csv files:
+```bash
+python plotting/plot_csv.py --csv_files milestones/09/outputs/whisker_small_t0_li01.csv milestones/09/outputs/whisker_large_t0_li01.csv milestones/09/outputs/whisker_small_t0_li005.csv milestones/09/outputs/whisker_large_t0_li005.csv --xdata "Strain" --ydata "Stress" --xlabel "Strain [Å]" --ylabel "Stress [eV/Å^3]" --labels "whisker_small, length_increase=0.1" "whisker_large, length_increase=0.1" "whisker_small, length_increase=0.05" "whisker_large, length_increase=0.05" 
+```
+
+## Figure 12
+To plot the data from the provided csv files:
+```bash
+python plotting/plot_csv.py --csv_files milestones/09/outputs/whisker_small_t100_li005.csv  milestones/09/outputs/whisker_medium_t100_li005.csv milestones/09/outputs/whisker_large_t100_li005.csv --xdata "Strain" --ydata "Stress" --xlabel "Strain [Å]" --ylabel "Stress [eV/Å^3]" --labels whisker_small whisker_medium whisker_large
+```
+
+
+

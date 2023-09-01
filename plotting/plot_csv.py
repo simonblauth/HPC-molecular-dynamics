@@ -52,7 +52,7 @@ def melting_point(df: pd.DataFrame, meltpoint_lower_bound, meltpoint_upper_bound
 
 def plot_heat_capacity(filepaths: list[str], labels: list[str]):
     cluster_sizes = [int(label.split('_')[1]) for label in labels]
-    heat_capacities = [heat_capacity(pd.read_csv(filepath), 800, 1000) for filepath in filepaths]
+    heat_capacities = [heat_capacity(pd.read_csv(filepath), 800, 1100) for filepath in filepaths]
     plt.plot(cluster_sizes, heat_capacities)
     plt.xlabel("Number of Atoms")
     plt.ylabel("Heat Capacity [eV/K]")
@@ -61,7 +61,7 @@ def plot_heat_capacity(filepaths: list[str], labels: list[str]):
 
 def plot_latent_heat(filepaths: list[str], labels: list[str]):
     cluster_sizes = [int(label.split('_')[1]) for label in labels]
-    latent_heats = [latent_heat(pd.read_csv(filepath), 800, 1000) for filepath in filepaths]
+    latent_heats = [latent_heat(pd.read_csv(filepath), 800, 1100) for filepath in filepaths]
     plt.plot(cluster_sizes, latent_heats)
     plt.xlabel("Number of Atoms")
     plt.ylabel("Latent Heat [K]")
@@ -70,7 +70,7 @@ def plot_latent_heat(filepaths: list[str], labels: list[str]):
 
 def plot_melting_point(filepaths: list[str], labels: list[str]):
     cluster_sizes = [int(label.split('_')[1]) for label in labels]
-    melting_points = [melting_point(pd.read_csv(filepath), 800, 1000) for filepath in filepaths]
+    melting_points = [melting_point(pd.read_csv(filepath), 800, 1100) for filepath in filepaths]
     plt.plot(cluster_sizes, melting_points)
     plt.xlabel("Number of Atoms")
     plt.ylabel("Melting Point [K]")

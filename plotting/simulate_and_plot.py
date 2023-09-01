@@ -21,10 +21,11 @@ def total_energy(args):
         filepaths.append(outpath)
         os.makedirs(osp.dirname(outpath), exist_ok=True)
         os.system(f"{simulator} --max_timesteps 100 --silent --timestep {ts} --output_interval 1 --csv {outpath}")
-    make_plot(filepaths, labels,
-              x="Timestep", y="Total Energy",
-              xlabel="Timestep", ylabel="Total Energy"
-              )
+    if not args.sim_only:
+        make_plot(filepaths, labels,
+                  x="Timestep", y="Total Energy",
+                  xlabel="Timestep", ylabel="Total Energy"
+                  )
 
 
 def total_energy_domains(args):
@@ -45,10 +46,11 @@ def total_energy_domains(args):
         command = f"mpirun -n {nd} --oversubscribe {simulator} -i {input_file} --mass 197 --timestep 1 --max_timesteps {timesteps} --output_interval 100 --cutoff 10.0 --domains {dd[0]} {dd[1]} {dd[2]} --shift_atoms 0.1 --deposit_energy 0.0 --csv {outpath} --silent"
         print(f"Simulating with {nd} workers.")
         os.system(command)
-    make_plot(filepaths, labels,
-              x="Timestep", y="Total Energy",
-              xlabel="Timestep", ylabel="Total Energy [eV]"
-              )
+    if not args.sim_only:
+        make_plot(filepaths, labels,
+                  x="Timestep", y="Total Energy",
+                  xlabel="Timestep", ylabel="Total Energy [eV]"
+                  )
 
 
 def simulation_times(args):
@@ -93,31 +95,35 @@ def temperature_over_energy(args):
         os.makedirs(osp.dirname(outpath), exist_ok=True)
         # TODO: fix deposit energies
         os.system(f"{simulator} -i {infile} --cutoff 7 --max_timesteps 50000 --output_interval 100 --timestep 1 --mass 197 --relaxation_time 100 --deposit_energy 0.5 --relaxation_time_deposit 20 --csv {outpath} --initial_relaxation 15000 --temperature 100 --smoothing 0.008 --thermostat_factor 10.0")
-    make_plot(filepaths, labels, "Total Energy", "Temperature", ylabel="Temperature [K]", xlabel="Total Energy [eV]", zero_x=True)
+    if not args.sim_only:
+        make_plot(filepaths, labels, "Total Energy", "Temperature", ylabel="Temperature [K]", xlabel="Total Energy [eV]", zero_x=True)
 
 
-def stress_strain(input_files: list[str], target_strains: list[int]):
-    # TODO: rework
+def stress_strain(args):
+    target_strains = args.target_strains
+    input_files = args.input_files
+    outdir = tempfile.gettempdir() if args.output_dir is None else args.output_dir
     temperatures = [0, 100]
     strain_steps = [0.1, 0.05]
+    strain_steps_label = ['01', '005']
     strain_interval = 100
     for target_strain, infile in zip(target_strains, input_files):
         filepaths = []
         labels = []
         for t in temperatures:
-            for i, ss in enumerate(strain_steps):
+            for li, ss in zip(strain_steps_label, strain_steps):
                 labels.append(f"initial_temperature={t}, length_increase={ss}")
-                tmp = tempfile.gettempdir()
-                filename = f"{osp.basename(infile).split('.')[0]}_t{t}_s{i}"
-                outpath_csv = osp.join(tmp, "hpc_sims", filename + ".csv")
-                # TODO: use temp dir
-                outpath_xyz = osp.join("/home/simon/Documents/Uni/HPC/code/milestones/09/outputs", filename + ".xyz")
+                filename = f"{osp.basename(infile).split('.')[0]}_t{t}_li{li}"
+                outpath_csv = osp.join(outdir, filename + ".csv")
+                outpath_xyz = osp.join(outdir, filename + ".xyz")
                 filepaths.append(outpath_csv)
                 os.makedirs(osp.dirname(outpath_csv), exist_ok=True)
                 timesteps = int(strain_interval * target_strain / ss)
                 command = f"mpirun -n 6 ./build/milestones/09/09 -i {infile} --mass 197 --timestep 1 --max_timesteps {timesteps} --output_interval 100 --cutoff 7.0 --domains 1 1 6 --periodic 0 0 1 --shift_atoms 0.1 --smoothing 0.01 --stretch {ss} --stretch_interval {strain_interval} --temperature {t} --relaxation_time 100 --initial_relaxation 10000 --thermostat_factor 10.0 --csv {outpath_csv} --traj {outpath_xyz}"
                 os.system(command)
-        make_plot(filepaths, labels, "Strain", "Stress", "Strain [Å]", "Stress [eV/Å^3]")
+                # print(command)
+        if not args.sim_only:
+            make_plot(filepaths, labels, "Strain", "Stress", "Strain [Å]", "Stress [eV/Å^3]")
 
 
 if __name__ == "__main__":
@@ -130,6 +136,7 @@ if __name__ == "__main__":
     parser.add_argument("--target_strains", nargs='+', type=int)
     parser.add_argument("--output_dir", type=str, help="Directory to write the output files. Uses temp directory by default")
     parser.add_argument("--timesteps", type=int, default=10000)
+    parser.add_argument("--sim_only", default=False, action='store_true')
     args = parser.parse_args()
     # print(args.simulators)
     match args.mode:
