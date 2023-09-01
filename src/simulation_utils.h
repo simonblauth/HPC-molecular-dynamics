@@ -5,6 +5,50 @@
 #include <argparse/argparse.hpp>
 #include <iostream>
 
+// Holds the parameters of a simulation
+class SimulationParameters {
+  private:
+    double timestep_;
+    size_t max_timesteps_;
+    double cutoff_;
+    double target_temperature_;
+    double relaxation_time_;
+    double relaxation_factor_;
+    size_t init_timesteps_;
+    size_t stretch_interval_;
+    double length_increase_;
+    double delta_Q_;
+    size_t relaxation_time_deposit_;
+
+  public:
+    SimulationParameters(argparse::ArgumentParser& parser) {
+        timestep_ = parser.get<double>("--timestep");
+        max_timesteps_ = parser.get<size_t>("--max_timesteps");
+        cutoff_ = parser.get<double>("--cutoff");
+        target_temperature_ = parser.get<double>("--temperature") * 1e-5;
+        relaxation_time_ = parser.get<size_t>("--relaxation_time") * timestep_;
+        relaxation_factor_ = parser.get<double>("--relaxation_time_factor");
+        init_timesteps_ = parser.get<size_t>("--initial_relaxation");
+        stretch_interval_ = parser.get<size_t>("--stretch_interval");
+        length_increase_ = parser.get<double>("--stretch");
+        delta_Q_ = parser.get<double>("--deposit_energy");
+        relaxation_time_deposit_ = parser.get<size_t>("--relaxation_time_deposit");
+    }
+    ~SimulationParameters() {}
+    double timestep() const { return timestep_; }
+    size_t max_timesteps() const { return max_timesteps_; }
+    double cutoff() const { return cutoff_; }
+    double target_temperature() const { return target_temperature_; }
+    double relaxation_time() const { return relaxation_time_; }
+    double relaxation_factor() const { return relaxation_factor_; }
+    size_t init_timesteps() const { return init_timesteps_; }
+    size_t stretch_interval() const { return stretch_interval_; }
+    double length_increase() const { return length_increase_; }
+    double delta_Q() const { return delta_Q_; }
+    size_t relaxation_time_deposit() const { return relaxation_time_deposit_; }
+};
+
+
 // constructs an ArgumentParser with default arguments used for most simulations
 argparse::ArgumentParser default_parser(const char* name) {
     argparse::ArgumentParser parser(name);
@@ -169,5 +213,11 @@ Atoms init_cubic_lattice(size_t nb_atoms_per_lattice, double lattice_distance) {
     }
     return atoms;
 }
+
+// TODO: Stretcher class
+// TODO: stats_collector function
+// TODO: move implementations to .cpp
+// TODO: check default values of parser
+// TODO: init atoms function
 
 #endif // __SIMULATION_UTILS_H

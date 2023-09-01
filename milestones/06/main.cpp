@@ -27,24 +27,19 @@ int main(int argc, char *argv[]) {
     size_t nb_atoms_per_lattice = parser.get<size_t>("--lattice_size");
 
     Atoms atoms = init_cubic_lattice(nb_atoms_per_lattice, lattice_distance);
-
     atoms.set_mass(parser.get<double>("--mass"));
+
     double timestep = parser.get<double>("--timestep") * std::sqrt(atoms.get_mass() * sigma * sigma / epsilon);
-    size_t max_timesteps = parser.get<size_t>("--max_timesteps");
-
-    double target_temperaure = parser.get<double>("--temperature") * 1e-5;
-    double relaxation_time = parser.get<size_t>("--relaxation_time") * timestep;
-
-    double cutoff = parser.get<double>("--cutoff");
+    SimulationParameters sim(parser);
     NeighborList neighbor_list;
 
     // simulate
-    for (size_t ts = 0; ts < max_timesteps; ts++) {
+    for (size_t ts = 0; ts < sim.max_timesteps(); ts++) {
         writer.write_traj(ts, atoms);
         verlet_step1(atoms, timestep);
-        double epot = lj_direct_summation(atoms, neighbor_list, cutoff, epsilon, sigma);
+        double epot = lj_direct_summation(atoms, neighbor_list, sim.cutoff(), epsilon, sigma);
         verlet_step2(atoms, timestep);
-        berendsen_thermostat(atoms, target_temperaure, timestep, relaxation_time);
+        berendsen_thermostat(atoms, sim.target_temperature(), timestep, sim.relaxation_time());
         double ekin = atoms.kinetic_energy();
         double temp = atoms.current_temperature();
         writer.write_stats(ts, ekin, epot, temp);

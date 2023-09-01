@@ -28,34 +28,23 @@ int main(int argc, char *argv[]) {
 
     // initialize simulation
     Atoms atoms(names, positions);
-
     atoms.set_mass(parser.get<double>("--mass") * 103.6);
-    double timestep = parser.get<double>("--timestep");
-    size_t max_timesteps = parser.get<size_t>("--max_timesteps");
 
-    size_t init_timesteps = parser.get<size_t>("--initial_relaxation");
-    size_t relaxation_time = parser.get<size_t>("--relaxation_time");
-    double target_temperaure = parser.get<double>("--temperature") * 1e-5;
-    double relaxation_increase = parser.get<double>("--relaxation_time_factor");
-    ThermostatScheduler scheduler(relaxation_increase, relaxation_time);
-    Equilibrium equilibrium(relaxation_increase, relaxation_time,
-                            target_temperaure, timestep, init_timesteps);
-
-    double delta_Q = parser.get<double>("--deposit_energy");
-    size_t relaxation_time_deposit = parser.get<size_t>("--relaxation_time_deposit");
-    EnergyPump pump(relaxation_time_deposit, delta_Q);
-
-    double cutoff = parser.get<double>("--cutoff");
-    NeighborList neighbor_list(cutoff);
+    SimulationParameters sim(parser);
+    ThermostatScheduler scheduler(sim.relaxation_factor(), sim.relaxation_time());
+    Equilibrium equilibrium(sim.relaxation_factor(), sim.relaxation_time(),
+                            sim.target_temperature(), sim.timestep(), sim.init_timesteps());
+    EnergyPump pump(sim.relaxation_time_deposit(), sim.delta_Q());
+    NeighborList neighbor_list(sim.cutoff());
 
     // relax
     writer.log("Equilibriating the system...");
-    for (size_t i = 0; i < init_timesteps; i++) {
+    for (size_t i = 0; i < sim.init_timesteps(); i++) {
         // writer.write_traj(i, atoms);
-        verlet_step1(atoms, timestep);
+        verlet_step1(atoms, sim.timestep());
         neighbor_list.update(atoms);
-        double epot = ducastelle(atoms, neighbor_list, cutoff);
-        verlet_step2(atoms, timestep);
+        double epot = ducastelle(atoms, neighbor_list, sim.cutoff());
+        verlet_step2(atoms, sim.timestep());
         equilibrium.step(atoms, i, atoms.current_temperature());
     }
 
@@ -64,12 +53,12 @@ int main(int argc, char *argv[]) {
     double alpha = parser.get<double>("--smoothing");
     ExponentialAverage avg_temp(alpha, atoms.current_temperature_kelvin());
     writer.log("Starting simulation");
-    for (size_t ts = 0; ts < max_timesteps; ts++) {
+    for (size_t ts = 0; ts < sim.max_timesteps(); ts++) {
         writer.write_traj(ts, atoms);
-        verlet_step1(atoms, timestep);
+        verlet_step1(atoms, sim.timestep());
         neighbor_list.update(atoms);
-        double epot = ducastelle(atoms, neighbor_list, cutoff);
-        verlet_step2(atoms, timestep);
+        double epot = ducastelle(atoms, neighbor_list, sim.cutoff());
+        verlet_step2(atoms, sim.timestep());
         double ekin = atoms.kinetic_energy();
         writer.write_stats(ts, ekin, epot, avg_temp.get());
         if (pump.relaxed()) {
