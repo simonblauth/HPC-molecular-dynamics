@@ -25,13 +25,12 @@ make test
 ```
 Setting up a `python` environment:
 ```bash
+cd <repository>
 conda create -n hpc-molecular-dynamics -y
 conda activate hpc-molecular-dynamics
 pip install -r requirements.txt
 ```
 The code was tested with python 3.11.3, however it should work for all python versions >=3.9
-
-## Running simulations
 
 ## Reproducing Figures
 Here I provide instructions on how to reproduce each figure from my report. For some simulations that take extremely long, the csv files from which the plots are generated are provided in this repo. However if you want to run the simulation yourself there are instructions for that as well. Note that the trajectory files are not present in this repo as they tend to grow very large for bigger simulations. 
